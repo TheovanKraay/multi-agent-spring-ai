@@ -1,9 +1,9 @@
+/*
 package com.example.multiai.memory;
 
 import com.azure.cosmos.*;
 import com.azure.cosmos.models.*;
-import com.example.multiai.manager.ChatMessage;
-import org.springframework.ai.chat.messages.Message;
+import com.example.multiai.agent.model.ChatMessage;
 
 import java.util.*;
 
@@ -30,4 +30,4 @@ public class CosmosMemoryStore {
             return new ArrayList<>();
         }
     }
-}
+}*/

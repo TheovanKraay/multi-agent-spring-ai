@@ -1,15 +1,16 @@
-package com.example.multiai.manager;
+/*
+package com.example.multiai.agent.manager;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 
 import java.util.Map;
 
-public class RoutingWorkflow {
+public class RoutingWorkflowV1 {
 
     private final ChatModel chatModel;
 
-    public RoutingWorkflow(ChatModel ChatModel) {
+    public RoutingWorkflowV1(ChatModel ChatModel) {
         System.out.println("[RoutingWorkflow] Initialized with ChatClient.");
         this.chatModel = ChatModel;
     }
@@ -66,3 +67,4 @@ public class RoutingWorkflow {
         }
     }
 }
+*/

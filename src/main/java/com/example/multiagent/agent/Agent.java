@@ -1,4 +1,4 @@
-package com.example.multiai.agent;
+package com.example.multiagent.agent;
 
 import java.util.List;
 

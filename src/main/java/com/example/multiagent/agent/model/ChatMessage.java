@@ -1,4 +1,4 @@
-package com.example.multiai.manager;
+package com.example.multiagent.agent.model;
 
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;

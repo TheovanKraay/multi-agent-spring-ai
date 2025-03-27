@@ -1,10 +1,11 @@
-package com.example.multiai.cli;
+package com.example.multiai.sample.app;
 
 import com.azure.cosmos.*;
 import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.example.multiai.agent.Agent;
-import com.example.multiai.manager.AgentManager;
-import com.example.multiai.memory.CosmosMemoryStore;
+import com.example.multiagent.agent.Agent;
+import com.example.multiagent.agent.orchestrator.AgentOrchestrator;
+import com.example.multiagent.memory.CosmosChatMemory;
+//import com.example.multiai.memory.CosmosMemoryStore;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.annotation.Tool;
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.time.LocalDateTime;
@@ -22,14 +22,14 @@ import java.util.Scanner;
 import java.util.UUID;
 
 @SpringBootApplication(scanBasePackages = "com.example.multiai")
-public class ChatCliApp {
+public class MultiAgentApp {
     @Autowired
     private ChatClient chatClient;
     public static void main(String[] args) {
         System.out.println("DEBUG >>> AZURE_OPENAI_APIKEY = " + System.getenv("AZURE_OPENAI_APIKEY"));
         System.out.println("DEBUG >>> AZURE_OPENAI_ENDPOINT = " + System.getenv("AZURE_OPENAI_ENDPOINT"));
 
-        ConfigurableApplicationContext context = SpringApplication.run(ChatCliApp.class, args);
+        ConfigurableApplicationContext context = SpringApplication.run(MultiAgentApp.class, args);
 
         CosmosClient cosmosClient = new CosmosClientBuilder()
                 .endpoint(System.getenv("AZURE_COSMOSDB_ENDPOINT"))
@@ -39,7 +39,8 @@ public class ChatCliApp {
         CosmosDatabase db = cosmosClient.getDatabase("MultiAgentDb");
         CosmosContainer container = db.getContainer("chatMemory");
 
-        CosmosMemoryStore memoryStore = new CosmosMemoryStore(container);
+        //CosmosMemoryStore memoryStore = new CosmosMemoryStore(container);
+        CosmosChatMemory chatMemory = new CosmosChatMemory(container);
         ChatModel chatModel = context.getBean(ChatModel.class);
 
         ArrayList<Object> timeTellerTools = new ArrayList<>();
@@ -48,8 +49,13 @@ public class ChatCliApp {
         ArrayList<Object> tellJokeTools = new ArrayList<Object>();
         tellJokeTools.add(new TellJokeTools());
 
-        AgentManager manager = new AgentManager(UUID.randomUUID().toString(), memoryStore, chatModel);
-        Agent agent1 = new Agent("timeteller", "You are a time teller assistant. Call getCurrentDateTime()", timeTellerTools, List.of());
+        AgentOrchestrator manager = new AgentOrchestrator(UUID.randomUUID().toString(), chatMemory, chatModel);
+        Agent agent1 = new Agent(
+                "timeteller",
+                "You are a time teller assistant. Call getCurrentDateTime()",
+                timeTellerTools,
+                List.of()
+        );
         Agent agent2 = new Agent("joketeller", "You are a funny assistant that can tell the user a joke. Call TellJokeTools()", tellJokeTools, List.of());
         manager.registerAgent(agent1);
         manager.registerAgent(agent2);
