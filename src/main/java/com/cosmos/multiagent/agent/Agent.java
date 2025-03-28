@@ -1,4 +1,4 @@
-package com.example.multiagent.agent;
+package com.cosmos.multiagent.agent;
 
 import java.util.List;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.multiagent.agent.orchestrator;
+package com.cosmos.multiagent.agent.orchestrator;
 
 import java.util.Map;
 

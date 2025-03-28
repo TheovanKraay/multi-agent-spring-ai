@@ -1,9 +1,9 @@
-package com.example.multiagent.agent.orchestrator;
+package com.cosmos.multiagent.agent.orchestrator;
 
 import com.azure.json.implementation.jackson.core.JsonProcessingException;
-import com.example.multiagent.agent.Agent;
-import com.example.multiagent.agent.model.ChatMessage;
-import com.example.multiagent.memory.CosmosChatMemory;
+import com.cosmos.multiagent.agent.Agent;
+import com.cosmos.multiagent.agent.model.ChatMessage;
+import com.cosmos.multiagent.agent.memory.CosmosChatMemory;
 //import com.example.multiai.memory.CosmosMemoryStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
@@ -57,19 +57,10 @@ public class AgentOrchestrator {
 
         System.out.println("DEBUG >>> String.valueOf(history) = " + String.valueOf(history));
         System.out.println("DEBUG >>> agent.getSystemPrompt() = " + agent.getSystemPrompt());
-/*        for (ChatMessage message : history) {
-            System.out.println("DEBUG >>> message in history = " + message.getText());
-        }*/
-//        for (Message message : history) {
-//            System.out.println("DEBUG >>> message in history = " + message.getText());
-//        }
-//
-//        List<ChatMessage> messages = new ArrayList<>();
-//        for (Message message : history) {
-//            messages.add(new ChatMessage(message.getRole(), message.getText());
-//        }
 
         //String response = ChatClient.create(chatModel).prompt(agent.getSystemPrompt()).user(input).messages(messages).tools(agent.getTools().toArray()).call().content();
+        //String response = chatModel.call(new Prompt(String.valueOf(history))).getResult().getOutput().toString();
+
         String response = ChatClient.builder(chatModel)
                 .build()
                 .prompt(agent.getSystemPrompt())
@@ -82,12 +73,13 @@ public class AgentOrchestrator {
                 .tools(agent.getTools().toArray())
                 .call()
                 .content();
-        //String response = chatModel.call(new Prompt(String.valueOf(history))).getResult().getOutput().toString();
-        history.add(new ChatMessage("user", input));
-        history.add(new ChatMessage("agent", response));
-        //memoryStore.saveMemory(sessionId, history);
-        chatMemory.add(sessionId, history);
 
+
+        List<Message> responseMessages = new ArrayList<>();
+
+        responseMessages.add(new ChatMessage("user", input));
+        responseMessages.add(new ChatMessage("agent", response));
+        chatMemory.add(sessionId, responseMessages);
         lastRespondingAgent = agent.getName();
         return response;
     }
