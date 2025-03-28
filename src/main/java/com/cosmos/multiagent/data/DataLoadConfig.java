@@ -1,11 +1,10 @@
-package com.cosmos.multiagent.app;
+package com.cosmos.multiagent.data;
 
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
-import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingModel;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
@@ -17,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.List;
 
 @Configuration
-public class MultiAgentAppConfig {
+public class DataLoadConfig {
 
     @Bean
     public CosmosAsyncClient cosmosAsyncClient() {
@@ -25,11 +24,6 @@ public class MultiAgentAppConfig {
                 .endpoint(System.getenv("AZURE_COSMOSDB_ENDPOINT"))
                 .credential(new DefaultAzureCredentialBuilder().build())
                 .buildAsyncClient();
-    }
-
-    @Bean
-    public ChatClient chatClient(AzureOpenAiChatModel chatModel) {
-        return ChatClient.builder(chatModel).build();
     }
 
     @Bean
@@ -46,7 +40,7 @@ public class MultiAgentAppConfig {
         return CosmosDBVectorStore.builder(cosmosAsyncClient, embeddingModel)
                 .databaseName("MultiAgentDb")
                 .containerName("Products")
-                .metadataFields(List.of("product_id"))
+                .metadataFields(List.of("product_id", "product_name"))
                 .partitionKeyPath("/id")
                 .vectorStoreThroughput(1000)
                 .vectorDimensions(1536)

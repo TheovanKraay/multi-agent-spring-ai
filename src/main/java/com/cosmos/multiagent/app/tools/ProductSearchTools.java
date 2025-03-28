@@ -19,7 +19,11 @@ public class ProductSearchTools {
     @Tool(description = "Search for a product in the vector store by text query")
     String productSearch(String searchText) {
         System.out.println("In ProductSearchTools");
-        List<Document> results = this.vectorStore.similaritySearch(SearchRequest.builder().query(searchText).topK(1).build());
+        List<Document> results = this.vectorStore.similaritySearch(SearchRequest.builder().query(searchText).topK(3).build());
+        results.forEach(result -> {
+            var id = result.getId();
+            System.out.println("id: " + id);
+        });
         if (results.isEmpty()) {
             System.out.println("No results found.");
             return "No results found.";

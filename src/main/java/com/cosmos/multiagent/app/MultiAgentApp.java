@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
 
-@SpringBootApplication(scanBasePackages = "com.cosmos.multiagent")
+@SpringBootApplication(scanBasePackages = "com.cosmos.multiagent.app")
 public class MultiAgentApp {
 
     public static void main(String[] args) {
-        SpringApplication.run(MultiAgentApp.class, args);
+        SpringApplication.run(com.cosmos.multiagent.app.MultiAgentApp.class, args);
     }
 
     @Bean
@@ -44,12 +44,9 @@ public class MultiAgentApp {
             db.createContainerIfNotExists("ChatMemory", "/conversationId").block();
             CosmosAsyncContainer container = db.getContainer("ChatMemory");
 
-            Document document1 = new Document(UUID.randomUUID().toString(), "A hat is a stylish and functional accessory designed to shield the head from the elements while adding a touch of personality to any outfit. Crafted from materials such as wool, cotton, straw, or synthetic blends, hats come in a variety of shapes and designs, from wide-brimmed sun hats to snug beanies and classic fedoras. They offer versatile use, providing protection from sun, rain, or cold while serving as a fashionable statement piece. Whether for outdoor adventures, formal occasions, or casual outings, a hat combines practicality and style, making it a timeless wardrobe essential", Map.of("key1", "value1"));
-            Document document2 = new Document(UUID.randomUUID().toString(), "Wool socks are premium, cozy footwear accessories designed to provide exceptional warmth, comfort, and moisture-wicking properties. Made from natural wool fibers, they are ideal for keeping feet insulated in cold weather while remaining breathable in warmer conditions. These socks are soft, durable, and naturally odor-resistant, making them perfect for everyday wear, outdoor adventures, or lounging at home. With their ability to regulate temperature and cushion feet, wool socks offer unparalleled comfort, making them an essential addition to any wardrobe, whether for hiking, working, or simply relaxing.", Map.of("key2", "value2"));
-            Document document3 = new Document(UUID.randomUUID().toString(), "Shoes are versatile footwear designed to protect and comfort the feet while enabling effortless movement and style. They come in a wide range of designs, materials, and functions, catering to various activities, from formal occasions to rugged outdoor adventures. Crafted from durable materials such as leather, canvas, or synthetic blends, shoes provide support, cushioning, and stability through features like rubber soles, padded insoles, and secure fastenings. Available in diverse styles such as sneakers, boots, sandals, and dress shoes, they blend functionality with aesthetic appeal, making them a staple for every wardrobe", Map.of("key3", "value3"));
-            vectorStore.add(List.of(document1, document2, document3));
             CosmosChatMemory chatMemory = new CosmosChatMemory(container);
 
+            //add agent tools
             ArrayList<Object> timeTellerTools = new ArrayList<>();
             timeTellerTools.add(new DateTimeTools());
 
@@ -64,6 +61,7 @@ public class MultiAgentApp {
 
             AgentOrchestrator agentOrchestrator = new AgentOrchestrator(UUID.randomUUID().toString(), chatMemory, chatModel);
 
+            //register agents
             agentOrchestrator.registerAgent(new Agent("timeteller",
                     "You are a time teller assistant. Call getCurrentDateTime()",
                     timeTellerTools, List.of()));
@@ -77,6 +75,7 @@ public class MultiAgentApp {
                     "You can help the user search for products. Ask for what products the user is interested in. Call productSearch() and pass in the user's question as an argument.",
                     productSearchTools, List.of()));
 
+            //start the chat
             Scanner scanner = new Scanner(System.in);
             while (true) {
                 System.out.print("User: ");
