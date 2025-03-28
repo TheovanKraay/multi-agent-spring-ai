@@ -5,6 +5,7 @@ import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
+import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingModel;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
@@ -44,8 +45,8 @@ public class MultiAgentAppConfig {
     ) {
         return CosmosDBVectorStore.builder(cosmosAsyncClient, embeddingModel)
                 .databaseName("MultiAgentDb")
-                .containerName("vector-store")
-                .metadataFields(List.of("country", "year", "city"))
+                .containerName("Products")
+                .metadataFields(List.of("metadata"))
                 .partitionKeyPath("/id")
                 .vectorStoreThroughput(1000)
                 .vectorDimensions(1536)
