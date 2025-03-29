@@ -24,6 +24,7 @@ public class MultiAgentAppConfig {
         return new CosmosClientBuilder()
                 .endpoint(System.getenv("AZURE_COSMOSDB_ENDPOINT"))
                 .credential(new DefaultAzureCredentialBuilder().build())
+                .contentResponseOnWriteEnabled(true)
                 .buildAsyncClient();
     }
 

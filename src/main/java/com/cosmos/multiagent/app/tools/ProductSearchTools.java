@@ -13,7 +13,6 @@ public class ProductSearchTools {
     private VectorStore vectorStore;
     public ProductSearchTools(VectorStore vectorStore) {
         this.vectorStore = vectorStore;
-        System.out.println("In ProductSearchTools constructor");
     }
 
     @Tool(description = "Search for a product in the vector store by text query")
