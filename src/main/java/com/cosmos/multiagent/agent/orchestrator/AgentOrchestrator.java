@@ -4,9 +4,9 @@ import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.PartitionKey;
 import com.cosmos.multiagent.agent.Agent;
-import com.cosmos.multiagent.agent.model.ChatMessage;
+import com.cosmos.multiagent.agent.memory.CosmosChatSession;
+import com.cosmos.multiagent.agent.models.ChatMessage;
 import com.cosmos.multiagent.agent.memory.CosmosChatMemory;
-import com.cosmos.multiagent.agent.model.ChatSession;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -22,7 +22,9 @@ public class AgentOrchestrator {
     private final Map<String, Agent> agents = new ConcurrentHashMap<>();
     private final CosmosChatMemory chatMemory;
     private final String sessionId;
-    private final CosmosAsyncContainer sessionContainer;
+    private final String userId;
+    private final String tenantId;
+    private final CosmosChatSession chatSession;
     private final ChatModel chatModel;
 
     @Autowired
@@ -30,13 +32,15 @@ public class AgentOrchestrator {
     AgentTransfer agentTransfer;
     AgentRouting agentRouting;
 
-    public AgentOrchestrator(String sessionId, CosmosAsyncContainer sessionContainer, CosmosChatMemory chatMemory, ChatModel chatModel) {
+    public AgentOrchestrator(String sessionId, String userId, String tenantId, CosmosChatSession chatSession, CosmosChatMemory chatMemory, ChatModel chatModel) {
         this.sessionId = sessionId;
-        this.sessionContainer = sessionContainer;
+        this.userId = userId;
+        this.tenantId = tenantId;
+        this.chatSession = chatSession;
         this.chatMemory = chatMemory;
         this.chatModel = chatModel;
         this.chatClient = ChatClient.create(chatModel);
-        this.agentTransfer = new AgentTransfer(sessionContainer, sessionId);
+        this.agentTransfer = new AgentTransfer(chatSession, sessionId, userId, tenantId);
         this.agentRouting = new AgentRouting(this.chatClient);
     }
 
@@ -44,10 +48,13 @@ public class AgentOrchestrator {
         agents.put(agent.getName(), agent);
     }
 
-    public String handleUserInput(String input) {
+    public List<String> handleUserInput(String input) {
+
+        List<String> responseArray = new ArrayList<>();
         logger.info("session id: {}", sessionId);
-        CosmosItemResponse<ChatSession> sessionCosmosItemResponse = sessionContainer.readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block();
-        String activeAgent = sessionCosmosItemResponse.getItem().getActiveAgent().toString();
+        //CosmosItemResponse<ChatSession> sessionCosmosItemResponse = chatSession.getContainer().readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block();
+        //String activeAgent = sessionCosmosItemResponse.getItem().getActiveAgent().toString();
+        String activeAgent = chatSession.getActiveAgent(sessionId, userId, tenantId);
         logger.info("Active agent: {}", activeAgent);
         if (activeAgent.equals("unknown")) {
             Map<String, String> routes = new HashMap<>();
@@ -70,17 +77,19 @@ public class AgentOrchestrator {
                 .tools(agent.getTools().toArray())
                 .call()
                 .content();
-        String checkActiveAgent = sessionContainer.readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block().getItem().getActiveAgent();
+
+        //String checkActiveAgent = chatSession.getContainer().readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block().getItem().getActiveAgent();
+        String checkActiveAgent = chatSession.getActiveAgent(sessionId, userId, tenantId);
+        responseArray.add(response);
         if (!checkActiveAgent.equals(activeAgent)) {
+            logger.info("Agent transfer during processing. New agent: {}", checkActiveAgent);
             //recursive call to handle the new agent
-            logger.info("Agent changed during processing. New agent: {}", checkActiveAgent);
-            logger.info("Doing recursive call to handle the new agent...");
-            return handleUserInput(input);
+            responseArray.addAll(handleUserInput(input));
         }
         List<Message> responseMessages = new ArrayList<>();
         responseMessages.add(new ChatMessage("user", input));
         responseMessages.add(new ChatMessage("agent", response));
         chatMemory.add(sessionId, responseMessages);
-        return response;
+        return responseArray;
     }
 }

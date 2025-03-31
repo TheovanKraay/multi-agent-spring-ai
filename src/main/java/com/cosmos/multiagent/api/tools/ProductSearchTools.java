@@ -1,6 +1,6 @@
-package com.cosmos.multiagent.app.tools;
+package com.cosmos.multiagent.api.tools;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -9,6 +9,8 @@ import org.springframework.ai.vectorstore.VectorStore;
 import java.util.List;
 
 public class ProductSearchTools {
+    private static final org.slf4j.Logger
+    logger = LoggerFactory.getLogger(ProductSearchTools.class);
 
     private VectorStore vectorStore;
     public ProductSearchTools(VectorStore vectorStore) {
@@ -17,7 +19,7 @@ public class ProductSearchTools {
 
     @Tool(description = "Search for a product in the vector store by text query")
     String productSearch(String searchText) {
-        System.out.println("In ProductSearchTools");
+        logger.info("Called productSearch() tool");
         List<Document> results = this.vectorStore.similaritySearch(SearchRequest.builder().query(searchText).topK(3).build());
         results.forEach(result -> {
             var id = result.getId();

@@ -1,0 +1,93 @@
+package com.cosmos.multiagent.agent.memory;
+
+import com.azure.cosmos.CosmosAsyncClient;
+import com.azure.cosmos.CosmosAsyncContainer;
+import com.azure.cosmos.CosmosAsyncDatabase;
+import com.azure.cosmos.CosmosException;
+import com.azure.cosmos.models.CosmosContainerProperties;
+import com.azure.cosmos.models.CosmosItemRequestOptions;
+import com.azure.cosmos.models.CosmosItemResponse;
+import com.azure.cosmos.models.CosmosPatchOperations;
+import com.azure.cosmos.models.PartitionKey;
+import com.azure.cosmos.models.PartitionKeyBuilder;
+import com.azure.cosmos.models.PartitionKeyDefinition;
+import com.azure.cosmos.models.PartitionKeyDefinitionVersion;
+import com.azure.cosmos.models.PartitionKind;
+import com.azure.cosmos.models.ThroughputProperties;
+import com.cosmos.multiagent.agent.models.ChatSession;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+public class CosmosChatSession {
+
+    private final CosmosAsyncContainer container;
+
+    public CosmosAsyncContainer getContainer() {
+        return this.container;
+    }
+
+    public CosmosChatSession(CosmosAsyncClient cosmosAsyncClient, String databaseName) {
+        String containerName = "ChatSession";
+        CosmosAsyncDatabase db = cosmosAsyncClient.getDatabase(databaseName);
+        // List of partition keys, in hierarchical order. You can have up to three levels of keys.
+        List<String> subpartitionKeyPaths = new ArrayList<String>();
+        subpartitionKeyPaths.add("/tenantId");
+        subpartitionKeyPaths.add("/userId");
+        subpartitionKeyPaths.add("/sessionId");
+
+        //Create a partition key definition object with Kind ("MultiHash") and Version V2
+        PartitionKeyDefinition subpartitionKeyDefinition = new PartitionKeyDefinition();
+        subpartitionKeyDefinition.setPaths(subpartitionKeyPaths);
+        subpartitionKeyDefinition.setKind(PartitionKind.MULTI_HASH);
+        subpartitionKeyDefinition.setVersion(PartitionKeyDefinitionVersion.V2);
+
+        // Create a container properties object
+        CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, subpartitionKeyDefinition);
+
+        // Create a throughput properties object
+        ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
+        db.createContainerIfNotExists(containerProperties, throughputProperties).block();
+        this.container = db.getContainer(containerName);
+    }
+
+    public String createSessionId(String userId, String tenantId) {
+
+        String id = UUID.randomUUID().toString();
+        ChatSession session = new ChatSession();
+        session.setId(id);
+        session.setTenantId(tenantId);
+        session.setUserId(userId);
+        session.setSessionId(id);
+        session.setActiveAgent("unknown");
+        session.setName("New Session");
+        CosmosItemResponse<ChatSession> response  = container.createItem(session).block();
+        return response.getItem().getId();
+    }
+    public void patchActiveAgent(String sessionId, String userId, String tenantId, String agentName) {
+        try {
+            // Define patch operations (e.g., update "name" and add "status")
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
+                    .replace("/activeAgent", agentName);
+
+            // Perform patch
+            CosmosItemResponse<ChatSession> response = container.patchItem(
+                    sessionId,
+                    new PartitionKeyBuilder().add(tenantId).add(userId).add(sessionId).build(),
+                    patchOps,
+                    ChatSession.class
+            ).block();
+
+            ChatSession updatedItem = response.getItem();
+            System.out.println("Patched item: " + updatedItem.getId());
+        } catch (CosmosException e) {
+            System.err.println("Patch failed: " + e.getMessage());
+        }
+    }
+    public String getActiveAgent(String sessionId, String userId, String tenantId) {
+        return container.readItem(sessionId, new PartitionKeyBuilder().add(tenantId).add(userId).add(sessionId).build(), ChatSession.class).block().getItem().getActiveAgent();
+        //return container.readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block().getItem().getActiveAgent();
+    }
+
+}

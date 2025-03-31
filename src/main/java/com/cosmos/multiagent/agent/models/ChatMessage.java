@@ -1,4 +1,4 @@
-package com.cosmos.multiagent.agent.model;
+package com.cosmos.multiagent.agent.models;
 
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;

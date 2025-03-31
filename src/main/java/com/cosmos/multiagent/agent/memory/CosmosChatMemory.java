@@ -3,7 +3,7 @@ package com.cosmos.multiagent.agent.memory;
 import com.azure.cosmos.*;
 import com.azure.cosmos.models.*;
 import com.azure.cosmos.util.CosmosPagedFlux;
-import com.cosmos.multiagent.agent.model.ChatMessage;
+import com.cosmos.multiagent.agent.models.ChatMessage;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import reactor.core.publisher.Flux;
@@ -17,8 +17,14 @@ import java.util.UUID;
 public class CosmosChatMemory implements ChatMemory {
     private final CosmosAsyncContainer container;
 
-    public CosmosChatMemory(CosmosAsyncContainer container) {
-        this.container = container;
+    public CosmosChatMemory(CosmosAsyncClient cosmosAsyncClient, String databaseName) {
+        CosmosAsyncDatabase db = cosmosAsyncClient.getDatabase(databaseName);
+        db.createContainerIfNotExists("ChatMemory", "/conversationId").block();
+        this.container = db.getContainer("ChatMemory");
+    }
+
+    public void createChatMemoryContainer(CosmosAsyncDatabase db) {
+        db.createContainerIfNotExists("ChatMemory", "/conversationId").block();
     }
 
     @Override

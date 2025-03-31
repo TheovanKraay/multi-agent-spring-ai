@@ -1,16 +1,18 @@
-package com.cosmos.multiagent.app;
+package com.cosmos.multiagent.api;
 
 import com.azure.cosmos.*;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.cosmos.multiagent.agent.Agent;
 import com.cosmos.multiagent.agent.memory.CosmosChatMemory;
-import com.cosmos.multiagent.agent.model.ChatSession;
+import com.cosmos.multiagent.agent.memory.CosmosChatSession;
+import com.cosmos.multiagent.agent.models.ChatSession;
 import com.cosmos.multiagent.agent.orchestrator.AgentOrchestrator;
 import com.cosmos.multiagent.agent.orchestrator.AgentTransfer;
-import com.cosmos.multiagent.app.tools.DateTimeTools;
-import com.cosmos.multiagent.app.tools.MathAssistantTools;
-import com.cosmos.multiagent.app.tools.ProductSearchTools;
-import com.cosmos.multiagent.app.tools.TellJokeTools;
+import com.cosmos.multiagent.api.tools.DateTimeTools;
+import com.cosmos.multiagent.api.tools.MathAssistantTools;
+import com.cosmos.multiagent.api.tools.ProductSearchTools;
+import com.cosmos.multiagent.api.tools.TellJokeTools;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -25,11 +27,12 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 
-@SpringBootApplication(scanBasePackages = "com.cosmos.multiagent.app")
-public class MultiAgentApp {
-
+@SpringBootApplication(scanBasePackages = "com.cosmos.multiagent.api")
+public class MultiAgent {
+    private static final org.slf4j.Logger
+    logger = LoggerFactory.getLogger(MultiAgent.class);
     public static void main(String[] args) {
-        SpringApplication.run(com.cosmos.multiagent.app.MultiAgentApp.class, args);
+        SpringApplication.run(MultiAgent.class, args);
     }
 
     @Bean
@@ -41,49 +44,41 @@ public class MultiAgentApp {
             ChatModel chatModel
     ) {
         return args -> {
-            CosmosAsyncDatabase db = cosmosAsyncClient.getDatabase("MultiAgentDb");
-            db.createContainerIfNotExists("ChatMemory", "/conversationId").block();
-            db.createContainerIfNotExists("Sessions", "/id").block();
-            CosmosAsyncContainer container = db.getContainer("ChatMemory");
-            CosmosChatMemory chatMemory = new CosmosChatMemory(container);
-            CosmosAsyncContainer sessionContainer = db.getContainer("Sessions");
-            String id = UUID.randomUUID().toString();
-            ChatSession session = new ChatSession();
-            session.setId(id);
-            session.setActiveAgent("unknown");
-            session.setName("New Session");
-            CosmosItemResponse<ChatSession> response  = sessionContainer.createItem(session).block();
-            String sessionId = response.getItem().getId();
-            System.out.println("Session ID after creation: " + sessionId);
-            AgentTransfer agentTransferTool = new AgentTransfer(sessionContainer, sessionId);
+            String CosmosDatabaseName = "MultiAgentDb";
+            CosmosChatMemory chatMemory = new CosmosChatMemory(cosmosAsyncClient, CosmosDatabaseName);
+            CosmosChatSession chatSession = new CosmosChatSession(cosmosAsyncClient, CosmosDatabaseName);
+            String userId = "User1";
+            String tenantId = "Tenant1";
+            String sessionId = chatSession.createSessionId(userId, tenantId);
+            logger.info("Session ID after creation: {}", sessionId);
 
             //add agent tools
             ArrayList<Object> timeTellerTools = new ArrayList<>();
             timeTellerTools.add(new DateTimeTools());
-            AgentTransfer timeTellerAgentTransferTool = new AgentTransfer(sessionContainer, sessionId);
+            AgentTransfer timeTellerAgentTransferTool = new AgentTransfer(chatSession, sessionId, userId, tenantId);
             timeTellerAgentTransferTool.setRoutableAgents(List.of("joketeller", "mathassistant", "productsearch"));
             timeTellerTools.add(timeTellerAgentTransferTool);
 
 
             ArrayList<Object> tellJokeTools = new ArrayList<>();
             tellJokeTools.add(new TellJokeTools());
-            AgentTransfer tellJokeToolsAgentTransferTool = new AgentTransfer(sessionContainer, sessionId);
+            AgentTransfer tellJokeToolsAgentTransferTool = new AgentTransfer(chatSession, sessionId, userId, tenantId);
             tellJokeToolsAgentTransferTool.setRoutableAgents(List.of("timeteller", "mathassistant", "productsearch"));
             tellJokeTools.add(tellJokeToolsAgentTransferTool);
 
             ArrayList<Object> mathTools = new ArrayList<>();
             mathTools.add(new MathAssistantTools());
-            AgentTransfer mathToolsAgentTransferTool = new AgentTransfer(sessionContainer, sessionId);
+            AgentTransfer mathToolsAgentTransferTool = new AgentTransfer(chatSession, sessionId, userId, tenantId);
             mathToolsAgentTransferTool.setRoutableAgents(List.of("timeteller", "joketeller", "productsearch"));
             mathTools.add(mathToolsAgentTransferTool);
 
             ArrayList<Object> productSearchTools = new ArrayList<>();
             productSearchTools.add(new ProductSearchTools(vectorStore));
-            AgentTransfer productSearchToolsAgentTransferTool = new AgentTransfer(sessionContainer, sessionId);
+            AgentTransfer productSearchToolsAgentTransferTool = new AgentTransfer(chatSession, sessionId, userId, tenantId);
             productSearchToolsAgentTransferTool.setRoutableAgents(List.of("timeteller", "joketeller", "mathassistant"));
             productSearchTools.add(productSearchToolsAgentTransferTool);
 
-            AgentOrchestrator agentOrchestrator = new AgentOrchestrator(sessionId,sessionContainer, chatMemory, chatModel);
+            AgentOrchestrator agentOrchestrator = new AgentOrchestrator(sessionId, userId, tenantId,chatSession,chatMemory, chatModel);
 
             //register agents
             agentOrchestrator.registerAgent(new Agent("timeteller",
@@ -113,8 +108,10 @@ public class MultiAgentApp {
             while (true) {
                 System.out.print("User: ");
                 String input = scanner.nextLine();
-                String reply = agentOrchestrator.handleUserInput(input);
-                System.out.println("AI: " + reply);
+                List<String> replyArray = agentOrchestrator.handleUserInput(input);
+                for (String reply: replyArray){
+                    System.out.println("AI: " + reply);
+                }
             }
         };
     }

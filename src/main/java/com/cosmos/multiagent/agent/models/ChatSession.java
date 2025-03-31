@@ -1,10 +1,38 @@
-package com.cosmos.multiagent.agent.model;
+package com.cosmos.multiagent.agent.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ChatSession {
     @JsonProperty("id")
     private String id;
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    private String sessionId;
+    private String userId;
+    private String tenantId;
     private String name;
     private String activeAgent;
 
