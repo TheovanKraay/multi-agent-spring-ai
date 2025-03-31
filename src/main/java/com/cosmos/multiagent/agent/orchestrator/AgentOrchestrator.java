@@ -3,15 +3,28 @@ package com.cosmos.multiagent.agent.orchestrator;
 import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.PartitionKey;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.ai.document.Document;
+
+import org.springframework.core.io.ClassPathResource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import com.cosmos.multiagent.agent.Agent;
 import com.cosmos.multiagent.agent.memory.CosmosChatSession;
 import com.cosmos.multiagent.agent.models.ChatMessage;
 import com.cosmos.multiagent.agent.memory.CosmosChatMemory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.messages.Message;
+import com.cosmos.multiagent.api.tools.ProductSearchTools;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,4 +105,6 @@ public class AgentOrchestrator {
         chatMemory.add(sessionId, responseMessages);
         return responseArray;
     }
+
+
 }

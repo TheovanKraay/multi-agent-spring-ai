@@ -1,15 +1,21 @@
 package com.cosmos.multiagent.api;
 
+import com.azure.ai.openai.OpenAIClient;
+import com.azure.ai.openai.OpenAIClientBuilder;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
+import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingModel;
+import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingOptions;
 import org.springframework.ai.chat.client.ChatClient;
+
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.cosmosdb.CosmosDBVectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

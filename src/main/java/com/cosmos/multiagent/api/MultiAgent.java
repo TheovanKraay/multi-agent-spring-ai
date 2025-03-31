@@ -1,3 +1,4 @@
+/*
 package com.cosmos.multiagent.api;
 
 import com.azure.cosmos.*;
@@ -59,7 +60,6 @@ public class MultiAgent {
             timeTellerAgentTransferTool.setRoutableAgents(List.of("joketeller", "mathassistant", "productsearch"));
             timeTellerTools.add(timeTellerAgentTransferTool);
 
-
             ArrayList<Object> tellJokeTools = new ArrayList<>();
             tellJokeTools.add(new TellJokeTools());
             AgentTransfer tellJokeToolsAgentTransferTool = new AgentTransfer(chatSession, sessionId, userId, tenantId);
@@ -116,3 +116,4 @@ public class MultiAgent {
         };
     }
 }
+*/
