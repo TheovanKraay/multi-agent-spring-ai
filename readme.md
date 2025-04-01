@@ -3,16 +3,17 @@
 ### Compile
 
 ```
-   mvn clean package
+mvn clean package
 ```
 
 ### Start the web server
-```
+
 ```shell
 java -jar target/springai-multiagent-1.0-exec.jar
 ````
 
 ### Swagger UI
+
 ```
 http://localhost:8080/swagger-ui/index.html
 ```
