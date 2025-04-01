@@ -1,6 +1,7 @@
 package com.cosmos.multiagent.api;
 
 import com.cosmos.multiagent.agent.orchestrator.AgentOrchestrator;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ public class MultiAgentController {
     private MultiAgentService multiAgentService;
 
     @PostMapping
-    public List<String> handleUserInput(@RequestParam String input) {
+    public List<Message> handleUserInput(@RequestParam String input) {
         AgentOrchestrator orchestrator = multiAgentService.getOrchestrator();
         return orchestrator.handleUserInput(input);
     }

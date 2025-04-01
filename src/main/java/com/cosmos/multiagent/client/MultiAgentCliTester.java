@@ -1,5 +1,6 @@
 package com.cosmos.multiagent.client;
 
+import com.cosmos.multiagent.agent.models.ChatMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -23,7 +24,7 @@ public class MultiAgentCliTester {
         System.out.println("Enter your message (type 'exit' to quit):");
 
         while (true) {
-            System.out.print("> ");
+            System.out.print("user: ");
             String input = scanner.nextLine();
             if ("exit".equalsIgnoreCase(input)) {
                 break;
@@ -42,10 +43,12 @@ public class MultiAgentCliTester {
                     String jsonResponse = reader.lines().collect(Collectors.joining());
                     reader.close();
 
-                    List<String> responses = objectMapper.readValue(jsonResponse, new TypeReference<List<String>>() {});
+                    List<ChatMessage> responses = objectMapper.readValue(jsonResponse, new TypeReference<List<ChatMessage>>() {});
 
-                    for (String response : responses) {
-                        System.out.println("AI: " + response);
+                    for (ChatMessage response : responses) {
+                        if (!response.getRole().equals("user")) {
+                            System.out.println(response.getRole()+ " agent: " + response.getText());
+                        }
                     }
                 } else {
                     System.out.println("Request failed with HTTP code: " + responseCode);

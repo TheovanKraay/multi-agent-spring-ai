@@ -1,16 +1,5 @@
 package com.cosmos.multiagent.agent.orchestrator;
 
-import com.azure.cosmos.CosmosAsyncContainer;
-import com.azure.cosmos.models.CosmosItemResponse;
-import com.azure.cosmos.models.PartitionKey;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.ai.document.Document;
-
-import org.springframework.core.io.ClassPathResource;
-
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,13 +7,11 @@ import com.cosmos.multiagent.agent.Agent;
 import com.cosmos.multiagent.agent.memory.CosmosChatSession;
 import com.cosmos.multiagent.agent.models.ChatMessage;
 import com.cosmos.multiagent.agent.memory.CosmosChatMemory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.messages.Message;
-import com.cosmos.multiagent.api.tools.ProductSearchTools;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,12 +48,9 @@ public class AgentOrchestrator {
         agents.put(agent.getName(), agent);
     }
 
-    public List<String> handleUserInput(String input) {
-
-        List<String> responseArray = new ArrayList<>();
+    public List<Message> handleUserInput(String input) {
+        List<Message> responseMessages = new ArrayList<>();
         logger.info("session id: {}", sessionId);
-        //CosmosItemResponse<ChatSession> sessionCosmosItemResponse = chatSession.getContainer().readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block();
-        //String activeAgent = sessionCosmosItemResponse.getItem().getActiveAgent().toString();
         String activeAgent = chatSession.getActiveAgent(sessionId, userId, tenantId);
         logger.info("Active agent: {}", activeAgent);
         if (activeAgent.equals("unknown")) {
@@ -77,7 +61,6 @@ public class AgentOrchestrator {
             activeAgent = agentRouting.route(input, routes);
             this.agentTransfer.transferAgent(activeAgent);
         }
-
         logger.info("Agent to use: {}", activeAgent);
         Agent agent = agents.get(activeAgent);
         String response = ChatClient.builder(chatModel)
@@ -90,20 +73,16 @@ public class AgentOrchestrator {
                 .tools(agent.getTools().toArray())
                 .call()
                 .content();
-
-        //String checkActiveAgent = chatSession.getContainer().readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block().getItem().getActiveAgent();
         String checkActiveAgent = chatSession.getActiveAgent(sessionId, userId, tenantId);
-        responseArray.add(response);
+        responseMessages.add(new ChatMessage("user", input));
+        responseMessages.add(new ChatMessage(activeAgent, response));
         if (!checkActiveAgent.equals(activeAgent)) {
             logger.info("Agent transfer during processing. New agent: {}", checkActiveAgent);
             //recursive call to handle the new agent
-            responseArray.addAll(handleUserInput(input));
+            responseMessages.addAll(handleUserInput(input));
         }
-        List<Message> responseMessages = new ArrayList<>();
-        responseMessages.add(new ChatMessage("user", input));
-        responseMessages.add(new ChatMessage("agent", response));
         chatMemory.add(sessionId, responseMessages);
-        return responseArray;
+        return responseMessages;
     }
 
 

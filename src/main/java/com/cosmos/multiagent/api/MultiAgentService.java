@@ -79,10 +79,9 @@ public class MultiAgentService {
         ));
 
         Agent mathAgent = new Agent("mathassistant",
-                "You can help the user with sums. Ask user which numbers they want to add together. " +
-                        "Call addNumbers()\"+\n" +
+                "You can help the user with sums. Ask user which numbers they want to add together. Call addNumbers()\"+\n" +
                 "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
-                "\"determine which agents you can call, them transferAgent() passing the appropriate agent\" +\n" +
+                "\"determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
                 "\"for the question being asked.",
                 List.of(new MathAssistantTools(),
                 agentTransfersAllowed("mathassistant", allAgents, dummyUserId, dummyTenantId, dummySessionId)
@@ -90,7 +89,10 @@ public class MultiAgentService {
 
         Agent productAgent = new Agent("productsearch",
                 "You can help the user search for products. Ask for what products the user is " +
-                "interested in. Call productSearch() and pass in the user's question as an argument.",
+                "interested in. Call productSearch() and pass in the user's question as an argument.\"+\n" +
+                "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
+                "\"determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
+                "\"for the question being asked.",
                 List.of(new ProductSearchTools(vectorStore),
                 agentTransfersAllowed("productsearch", allAgents, dummyUserId, dummyTenantId, dummySessionId)
         ));
