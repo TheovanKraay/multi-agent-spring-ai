@@ -8,13 +8,16 @@ import com.azure.cosmos.models.CosmosContainerProperties;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosPatchOperations;
+import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.PartitionKeyBuilder;
 import com.azure.cosmos.models.PartitionKeyDefinition;
 import com.azure.cosmos.models.PartitionKeyDefinitionVersion;
 import com.azure.cosmos.models.PartitionKind;
 import com.azure.cosmos.models.ThroughputProperties;
+import com.azure.cosmos.util.CosmosPagedFlux;
 import com.cosmos.multiagent.agent.models.ChatSession;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,6 +91,21 @@ public class CosmosChatSession {
     public String getActiveAgent(String sessionId, String userId, String tenantId) {
         return container.readItem(sessionId, new PartitionKeyBuilder().add(tenantId).add(userId).add(sessionId).build(), ChatSession.class).block().getItem().getActiveAgent();
         //return container.readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block().getItem().getActiveAgent();
+    }
+
+    public List<ChatSession> getSessions(String userId, String tenantId) {
+        List<ChatSession> sessions = new ArrayList<>();
+        CosmosPagedFlux<ChatSession> sessionResults = this.container.queryItems("SELECT * FROM c WHERE c.userId = '" + userId + "' AND c.tenantId = '" + tenantId + "'", new CosmosQueryRequestOptions(), ChatSession.class);
+
+        sessionResults.byPage().flatMap(page -> {
+            for (ChatSession session : page.getResults())
+            {
+                sessions.add(session);
+            }
+            return Flux.empty();
+        }).blockLast();
+        return sessions;
+
     }
 
 }

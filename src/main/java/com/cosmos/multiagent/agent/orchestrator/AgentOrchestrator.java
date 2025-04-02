@@ -49,41 +49,81 @@ public class AgentOrchestrator {
     }
 
     public List<Message> handleUserInput(String input) {
+        return handleUserInput(input, this.sessionId, this.userId, this.tenantId, true);
+    }
+
+    public List<Message> handleUserInput(String input, String sessionId, String userId, String tenantId, boolean saveChatMemory) {
         List<Message> responseMessages = new ArrayList<>();
         logger.info("session id: {}", sessionId);
+
         String activeAgent = chatSession.getActiveAgent(sessionId, userId, tenantId);
         logger.info("Active agent: {}", activeAgent);
+
+        // Route if unknown
         if (activeAgent.equals("unknown")) {
             Map<String, String> routes = new HashMap<>();
             for (Agent agent : agents.values()) {
                 routes.put(agent.getName(), agent.getSystemPrompt());
             }
             activeAgent = agentRouting.route(input, routes);
-            this.agentTransfer.transferAgent(activeAgent);
+            this.agentTransfer.transferAgent(activeAgent, sessionId, userId, tenantId);
         }
+
         logger.info("Agent to use: {}", activeAgent);
         Agent agent = agents.get(activeAgent);
+
+        // Build and call the chat client
         String response = ChatClient.builder(chatModel)
                 .build()
-                .prompt(agent.getSystemPrompt())
-                .advisors(
-                        new MessageChatMemoryAdvisor(chatMemory)
-                )
+                .prompt(agent.getSystemPrompt() + "tenantId: " + tenantId + " userId: " + userId + " sessionId: " + sessionId)
+                .advisors(new MessageChatMemoryAdvisor(chatMemory))
                 .user(input)
                 .tools(agent.getTools().toArray())
                 .call()
                 .content();
+
+        // Check if the agent has changed during the call
         String checkActiveAgent = chatSession.getActiveAgent(sessionId, userId, tenantId);
-        responseMessages.add(new ChatMessage("user", input));
+
+        // Only add the user message once, in the top-level call
+        if (saveChatMemory) {
+            responseMessages.add(new ChatMessage("user", input));
+        }
+
         responseMessages.add(new ChatMessage(activeAgent, response));
+
+        // If an agent transfer occurred during processing
         if (!checkActiveAgent.equals(activeAgent)) {
             logger.info("Agent transfer during processing. New agent: {}", checkActiveAgent);
-            //recursive call to handle the new agent
-            responseMessages.addAll(handleUserInput(input));
+            List<Message> recursiveMessages = handleUserInput(input, sessionId, userId, tenantId, false);
+            responseMessages.addAll(recursiveMessages);
         }
-        chatMemory.add(sessionId, responseMessages);
+
+        // Deduplicate user messages: keep only the first
+        boolean userMessageSeen = false;
+        Iterator<Message> iterator = responseMessages.iterator();
+        while (iterator.hasNext()) {
+            Message message = iterator.next();
+            if (message instanceof ChatMessage) {
+                ChatMessage chatMessage = (ChatMessage) message;
+                if ("user".equals(chatMessage.getRole())) {
+                    if (!userMessageSeen) {
+                        userMessageSeen = true;
+                    } else {
+                        iterator.remove();
+                    }
+                }
+            }
+        }
+
+        // Only save memory at the top-level call
+        if (saveChatMemory) {
+            chatMemory.add(sessionId, responseMessages);
+        }
+
         return responseMessages;
     }
+
 
 
 }

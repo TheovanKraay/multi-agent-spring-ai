@@ -4,6 +4,8 @@ import com.azure.cosmos.CosmosAsyncClient;
 import com.cosmos.multiagent.agent.Agent;
 import com.cosmos.multiagent.agent.memory.CosmosChatMemory;
 import com.cosmos.multiagent.agent.memory.CosmosChatSession;
+import com.cosmos.multiagent.agent.models.ChatMessage;
+import com.cosmos.multiagent.agent.models.ChatSession;
 import com.cosmos.multiagent.agent.orchestrator.AgentOrchestrator;
 import com.cosmos.multiagent.agent.orchestrator.AgentTransfer;
 import com.cosmos.multiagent.api.tools.DateTimeTools;
@@ -12,6 +14,7 @@ import com.cosmos.multiagent.api.tools.ProductSearchTools;
 import com.cosmos.multiagent.api.tools.TellJokeTools;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -64,7 +67,8 @@ public class MultiAgentService {
                 "You are a time teller assistant. Call getCurrentDateTime()\"+\n" +
                 "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
                 "\"determine which agents you can call, then transferAgent() passing the appropriate agent\" +\n" +
-                "\"for the question being asked.", List.of(
+                "\"for the question being asked, plus the tenantId, userId, and sessionId.",
+                List.of(
                 new DateTimeTools(),
                 agentTransfersAllowed("timeteller", allAgents, dummyUserId, dummyTenantId, dummySessionId)
         ));
@@ -73,7 +77,7 @@ public class MultiAgentService {
                 "You are a funny assistant that can tell the user a joke. Call TellJokeTools()\" +\n" +
                 "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
                 "\"determine which agents you can call, then transferAgent() passing the appropriate agent\" +\n" +
-                "\"for the question being asked.",
+                "\"for the question being asked, plus the tenantId, userId, and sessionId.",
                 List.of(new TellJokeTools(),
                 agentTransfersAllowed("joketeller", allAgents, dummyUserId, dummyTenantId, dummySessionId)
         ));
@@ -82,7 +86,7 @@ public class MultiAgentService {
                 "You can help the user with sums. Ask user which numbers they want to add together. Call addNumbers()\"+\n" +
                 "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
                 "\"determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
-                "\"for the question being asked.",
+                "\"for the question being asked, plus the tenantId, userId, and sessionId.",
                 List.of(new MathAssistantTools(),
                 agentTransfersAllowed("mathassistant", allAgents, dummyUserId, dummyTenantId, dummySessionId)
         ));
@@ -92,7 +96,7 @@ public class MultiAgentService {
                 "interested in. Call productSearch() and pass in the user's question as an argument.\"+\n" +
                 "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
                 "\"determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
-                "\"for the question being asked.",
+                "\"for the question being asked, plus the tenantId, userId, and sessionId.",
                 List.of(new ProductSearchTools(vectorStore),
                 agentTransfersAllowed("productsearch", allAgents, dummyUserId, dummyTenantId, dummySessionId)
         ));
@@ -115,6 +119,18 @@ public class MultiAgentService {
 
     public CosmosChatSession getChatSession() {
         return chatSession;
+    }
+
+    public List<ChatSession> getChatSessions(String userId, String tenantId) {
+        return chatSession.getSessions(userId, tenantId);
+    }
+
+    public List<Message> getChatSession(String sessionId, int lastN) {
+        return chatMemory.get(sessionId, lastN);
+    }
+
+    public String getChatSessionId(String userId, String tenantId) {
+        return chatSession.createSessionId(userId, tenantId);
     }
 
     public void dataLoad() throws IOException {

@@ -30,9 +30,14 @@ public class AgentTransfer {
         this.tenantId = tenantId;
     }
 
-    @Tool(description = "Transfer agent to another agent")
+/*    @Tool(description = "Transfer agent to another agent")
     String transferAgent(String agentName) {
         chatSession.patchActiveAgent(this.sessionId, this.userId, this.tenantId,  agentName);
+        return "Agent transferred to " + agentName;}*/
+
+    @Tool(description = "Transfer agent to another agent")
+    String transferAgent(String agentName, String sessionId, String userId, String tenantId) {
+        chatSession.patchActiveAgent(sessionId, userId, tenantId, agentName);
         return "Agent transferred to " + agentName;}
 
 }

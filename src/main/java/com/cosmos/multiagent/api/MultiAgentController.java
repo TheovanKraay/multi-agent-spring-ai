@@ -1,8 +1,8 @@
 package com.cosmos.multiagent.api;
 
+import com.cosmos.multiagent.agent.models.ChatSession;
 import com.cosmos.multiagent.agent.orchestrator.AgentOrchestrator;
 import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +20,27 @@ public class MultiAgentController {
     public List<Message> handleUserInput(@RequestParam String input) {
         AgentOrchestrator orchestrator = multiAgentService.getOrchestrator();
         return orchestrator.handleUserInput(input);
+    }
+
+    @PostMapping("/tenant/{tenantId}/user/{userId}/session/{sessionId}/completion")
+    public List<Message> completion(@RequestParam String input, @PathVariable String userId, @PathVariable String tenantId, @PathVariable String sessionId) {
+        AgentOrchestrator orchestrator = multiAgentService.getOrchestrator();
+        return orchestrator.handleUserInput(input, sessionId, userId, tenantId, true);
+    }
+
+    @PostMapping("/tenant/{tenantId}/user/{userId}/session")
+    public String createSession(@PathVariable String userId, @PathVariable String tenantId) {
+        return multiAgentService.getChatSessionId(userId, tenantId);
+    }
+
+    @GetMapping("/tenant/{tenantId}/user/{userId}/sessions")
+    public List<ChatSession> getSessions(@PathVariable String userId, @PathVariable String tenantId) {
+        return multiAgentService.getChatSessions(userId, tenantId);
+    }
+
+    @GetMapping("/tenant/{tenantId}/user/{userId}/session/{sessionId}/messages{lastN}")
+    public List<Message> getSession(@PathVariable String userId, @PathVariable String tenantId, @PathVariable String sessionId, @RequestParam int lastN) {
+        return multiAgentService.getChatSession(sessionId, lastN);
     }
 
     @GetMapping("/data")
