@@ -43,6 +43,12 @@ public class MultiAgentController {
         return multiAgentService.getChatSession(sessionId, lastN);
     }
 
+    @DeleteMapping("/tenant/{tenantId}/user/{userId}/session/{sessionId}")
+    public void deleteSession(@PathVariable String userId, @PathVariable String tenantId, @PathVariable String sessionId) {
+        multiAgentService.getChatSession().deleteSession(sessionId, userId, tenantId);
+        multiAgentService.getChatMemory().clear(sessionId);
+    }
+
     @GetMapping("/data")
     public void dataLoad() throws IOException {
         multiAgentService.dataLoad();

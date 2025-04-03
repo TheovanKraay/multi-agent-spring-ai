@@ -118,6 +118,7 @@ public class AgentOrchestrator {
 
         // Only save memory at the top-level call
         if (saveChatMemory) {
+            logger.info("Saving chat memory for session: {}", sessionId);
             chatMemory.add(sessionId, responseMessages);
         }
 

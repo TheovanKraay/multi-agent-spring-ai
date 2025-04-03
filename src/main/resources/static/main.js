@@ -1,173 +1,183 @@
+
+// Inject v-cloak CSS to prevent {{ }} from showing before Vue mounts
+const cloakStyle = document.createElement('style');
+cloakStyle.innerHTML = '[v-cloak] { display: none; }';
+document.head.appendChild(cloakStyle);
+
 const CONTEXT_MESSAGE_COUNT = 5;
 const DEFAULT_GREETING_MESSAGE = "Hello! How can I assist you today?";
 const API_URL = '/api/chat';
-const API_HEADER = {
-  "Content-Type": "application/json",
-};
+const API_HEADER = { "Content-Type": "application/json" };
+const TENANT_ID = "default";
 
 var app = new Vue({
   el: '#main',
   data: {
     chatHistory: {
-      data: JSON.parse(localStorage.getItem("chatHistory")) ?? [],
+      data: [],
       activeChatId: null,
       job: {}
-    }
+    },
+    userId: null
   },
-  created: function () {
-    if (this.chatHistory.data.length === 0) {
-      this.newChat();
-    } else {
-      const activeChatId = this.chatHistory.data[this.chatHistory.data.length - 1].id;
-      this.openChat(activeChatId);
-    }
+  created: async function () {
+    console.log("Vue app created");
+    await this.initUserId();
+    await this.loadSessions();
   },
   methods: {
     parseMarkdown: marked.parse,
     scrollThreadToBottom: function () {
       const chatMessageList = document.getElementById("chat-thread-message-list");
-      chatMessageList.scrollTop = chatMessageList.scrollHeight;
+      if (chatMessageList) chatMessageList.scrollTop = chatMessageList.scrollHeight;
     },
     scrollHistoryToTop: function () {
       const chatHistoryList = document.getElementById("chat-history-list");
-      chatHistoryList.scrollTop = 0;
+      if (chatHistoryList) chatHistoryList.scrollTop = 0;
     },
     parseTimestamp: function (timestamp) {
       const day = new Date(timestamp);
-      const date = `${day.getMonth()+1}/${day.getDate()}/${day.getFullYear()}`;
-      const time = day.toLocaleTimeString('en-US', {hour12: true, hour: 'numeric', minute: 'numeric', second: 'numeric'});
-      const dateTime = `${date}, ${time}`;
+      const date = `${day.getMonth() + 1}/${day.getDate()}/${day.getFullYear()}`;
+      const time = day.toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: 'numeric', second: 'numeric' });
+      return `${date}, ${time}`;
+    },
+    initUserId: async function () {
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        this.userId = data.ip.replace(/\./g, '-');
+      } catch {
+        this.userId = "anonymous";
+      }
+    },
+    loadSessions: async function () {
+      const res = await fetch(`${API_URL}/tenant/${TENANT_ID}/user/${this.userId}/sessions`);
+      if (!res.ok) return;
 
-      return dateTime;
+      const sessions = await res.json();
+      for (let session of sessions) {
+        const messageRes = await fetch(`${API_URL}/tenant/${TENANT_ID}/user/${this.userId}/session/${session.sessionId}/messages?lastN=50`);
+        const messages = messageRes.ok ? await messageRes.json() : [];
+
+        this.chatHistory.data.push({
+          id: session.sessionId,
+          title: session.name || "New chat",
+          timestamp: Date.now(),
+          messages: Array.isArray(messages) ? messages.map(m => ({
+              sender: m.role === 'user' ? 'human' : 'bot',
+              text: m.role !== 'user' ? `**${m.role} Agent**: ${m.text}` : m.text,
+              timestamp: Date.now()
+            })) : []
+        });
+      }
+
+      if (this.chatHistory.data.length > 0) {
+        this.openChat(this.chatHistory.data[this.chatHistory.data.length - 1].id);
+      } else {
+        this.newChat();
+      }
     },
     openChat: function (id) {
       this.chatHistory.activeChatId = id;
-
-      setTimeout(() => {
-        this.scrollThreadToBottom();
-      }, 0);
+      setTimeout(() => this.scrollThreadToBottom(), 0);
     },
-    newChat: function () {
-      const timestamp = new Date().getTime();
-      const newChatHistory = {
-        id: Math.random().toString(16).slice(2),
+    newChat: async function () {
+      const res = await fetch(`${API_URL}/tenant/${TENANT_ID}/user/${this.userId}/session`, {
+        method: "POST",
+        headers: API_HEADER
+      });
+      const sessionId = await res.text();
+      const timestamp = Date.now();
+      const newChat = {
+        id: sessionId,
         title: "New chat",
         timestamp: timestamp,
-        messages: [
-          {
-            sender: "bot",
-            text: DEFAULT_GREETING_MESSAGE,
-            timestamp: timestamp
-          }
-        ]
-      }
-
-      this.chatHistory.data.push(newChatHistory);
-      this.chatHistory.activeChatId = newChatHistory.id;
-
-      this.saveChatHistory();
-
-      setTimeout(() => {
-        this.scrollHistoryToTop();
-      }, 0);
+        messages: [{
+          sender: "bot",
+          text: DEFAULT_GREETING_MESSAGE,
+          timestamp: timestamp
+        }]
+      };
+      this.chatHistory.data.push(newChat);
+      this.chatHistory.activeChatId = sessionId;
+      this.scrollHistoryToTop();
+      this.scrollThreadToBottom();
     },
-    sendMessage: function () {
+    sendMessage: async function () {
       const message = document.getElementById("chat-input-box").value.trim();
-  
-      if (message === "") {
-        return;
-      }
-  
+      if (!message) return;
+
       document.getElementById("chat-input-box").value = "";
-      const activeChat = this.chatHistory.data.find(chat => chat.id === this.chatHistory.activeChatId);
-      activeChat.messages.push({
+
+      const chat = this.chatHistory.data.find(chat => chat.id === this.chatHistory.activeChatId);
+      const timestamp = Date.now();
+
+      chat.messages.push({
         sender: "human",
         text: message,
-        timestamp: new Date().getTime()
+        timestamp: timestamp
       });
-  
-      if (activeChat.title === "New chat") {
-        activeChat.title = message;
+
+      if (chat.title === "New chat") {
+        chat.title = message;
       }
 
-      this.saveChatHistory();
-      this.addJob(activeChat.id, message);
-
-      setTimeout(() => {
-        this.scrollThreadToBottom();
-      }, 0);
+      this.addJob(chat.id, message);
+      setTimeout(() => this.scrollThreadToBottom(), 0);
     },
+    addJob: async function (id, userInput) {
+      this.chatHistory.job[id] = this.chatHistory.job[id] ?? [];
+      this.chatHistory.job[id].push("processing");
 
-addJob: async function (id, userInput) {
-  this.chatHistory.job[id] = this.chatHistory.job[id] ?? [];
-  const currentChat = this.chatHistory.data.find(chat => chat.id === id);
-  const requestId = Math.random().toString(16).slice(2);
-  this.chatHistory.job[id].push(requestId);
-
-  const messages = currentChat.messages.slice(1).slice(0 - CONTEXT_MESSAGE_COUNT).map(message => {
-    return {
-      content: message.text,
-      role: message.sender === "bot" ? "assistant" : "user"
-    }
-  });
-
-  const response = await fetch(`${API_URL}?input=${encodeURIComponent(userInput)}`, {
-    method: "POST"
-  });
-
-  const data = await response.json();  // 👈 Parse as JSON array
-
-  data
-    .filter(msg => msg.role !== "user")  // 👈 Ignore 'user' roles
-    .forEach(msg => {
-      currentChat.messages.push({
-        sender: "bot",
-        text: `**${msg.role}**: ${msg.text}`,  // 👈 Prepend role to text
-        timestamp: new Date().getTime()
+      await fetch(`${API_URL}/tenant/${TENANT_ID}/user/${this.userId}/session/${id}/completion?input=${encodeURIComponent(userInput)}`, {
+        method: "POST",
+        headers: API_HEADER
       });
-    });
 
-  this.saveChatHistory();
-
-  const jobIndex = this.chatHistory.job[id].findIndex(job => job === requestId);
-  this.chatHistory.job[id].splice(jobIndex, 1);
-  if (this.chatHistory.job[id].length === 0) {
-    delete this.chatHistory.job[id];
-  }
-
-  setTimeout(() => {
-    this.scrollThreadToBottom();
-  }, 0);
-},
-
-removeChat: function (id) {
-      const index = this.chatHistory.data.findIndex(chat => chat.id === id);
-      this.chatHistory.data.splice(index, 1);
-      if (this.chatHistory.activeChatId === id) {
-        if (this.chatHistory.data.length > 0) {
-          this.chatHistory.activeChatId = this.chatHistory.data[0].id;
+      try {
+        const res = await fetch(`${API_URL}/tenant/${TENANT_ID}/user/${this.userId}/session/${id}/messages?lastN=50`);
+        if (res.ok) {
+          const messages = await res.json();
+          const chat = this.chatHistory.data.find(chat => chat.id === id);
+          if (chat && messages && Array.isArray(messages)) {
+            chat.messages = messages.map(m => ({
+              sender: m.role === 'user' ? 'human' : 'bot',
+              text: m.role !== 'user' ? `**${m.role} Agent**: ${m.text}` : m.text,
+              timestamp: Date.now()
+            }));
+            this.scrollThreadToBottom();
+          } else {
+            console.warn("No chat or messages returned");
+          }
         } else {
-          this.newChat();
+          console.error("Failed to load messages from backend.");
         }
+      } catch (err) {
+        console.error("Error fetching messages:", err);
+      } finally {
+        this.chatHistory.job[id] = [];
       }
-
-      this.saveChatHistory();
-
-      setTimeout(() => {
-        this.scrollThreadToBottom();
-      }, 0);
     },
-    pressToSendMessage: function (event) {
-      if (event.keyCode === 13 && event.ctrlKey) {
+    pressToSendMessage: function (e) {
+      if (e && e.key === "Enter") {
         this.sendMessage();
-        event.preventDefault();
-
-        return false;
       }
     },
-    saveChatHistory: function () {
-      const chatHistory = JSON.stringify(this.chatHistory.data);
-      localStorage.setItem("chatHistory", chatHistory);
+
+    removeChat: async function (id) {
+      try {
+        await fetch(`${API_URL}/tenant/${TENANT_ID}/user/${this.userId}/session/${id}`, {
+          method: "DELETE",
+          headers: API_HEADER
+        });
+      } catch (err) {
+        console.warn("Failed to delete session:", err);
+      }
+
+      this.chatHistory.data = this.chatHistory.data.filter(chat => chat.id !== id);
+      if (this.chatHistory.activeChatId === id) {
+        this.chatHistory.activeChatId = this.chatHistory.data.length ? this.chatHistory.data[0].id : null;
+      }
     }
   }
 });

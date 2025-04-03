@@ -31,6 +31,7 @@ public class CosmosChatMemory implements ChatMemory {
     public void add(String conversationId, List<Message> messages) {
         List<Mono<CosmosItemResponse<Object>>> tasks = new ArrayList<>();
 
+        System.out.println("Adding messages to Cosmos DB: " + conversationId);
         for (Message message : messages) {
             if (!(message instanceof ChatMessage)) {
                 continue; // skip unknown message types
@@ -41,7 +42,7 @@ public class CosmosChatMemory implements ChatMemory {
             doc.put("conversationId", conversationId);
             doc.put("role", chatMessage.getRole());
             doc.put("text", chatMessage.getText());
-
+            //container.createItem(doc, new PartitionKey(conversationId), new CosmosItemRequestOptions()).block();
             tasks.add(container.createItem(doc, new PartitionKey(conversationId), new CosmosItemRequestOptions()));
         }
 

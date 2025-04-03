@@ -121,6 +121,10 @@ public class MultiAgentService {
         return chatSession;
     }
 
+    public CosmosChatMemory getChatMemory() {
+        return chatMemory;
+    }
+
     public List<ChatSession> getChatSessions(String userId, String tenantId) {
         return chatSession.getSessions(userId, tenantId);
     }

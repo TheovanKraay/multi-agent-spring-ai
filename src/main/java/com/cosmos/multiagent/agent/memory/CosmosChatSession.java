@@ -108,4 +108,8 @@ public class CosmosChatSession {
 
     }
 
+    public void deleteSession(String sessionId, String userId, String tenantId) {
+        container.deleteItem(sessionId, new PartitionKeyBuilder().add(tenantId).add(userId).add(sessionId).build()).block();
+    }
+
 }
