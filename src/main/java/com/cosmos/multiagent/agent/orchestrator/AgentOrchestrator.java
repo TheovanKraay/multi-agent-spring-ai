@@ -26,7 +26,6 @@ public class AgentOrchestrator {
 
     @Autowired
     private ChatClient chatClient;
-    AgentTransfer agentTransfer;
     AgentRouting agentRouting;
 
     public AgentOrchestrator(CosmosChatSession chatSession, CosmosChatMemory chatMemory, ChatModel chatModel) {
@@ -34,7 +33,6 @@ public class AgentOrchestrator {
         this.chatMemory = chatMemory;
         this.chatModel = chatModel;
         this.chatClient = ChatClient.create(chatModel);
-        this.agentTransfer = new AgentTransfer(chatSession);
         this.agentRouting = new AgentRouting(this.chatClient);
     }
 
@@ -47,28 +45,39 @@ public class AgentOrchestrator {
         logger.info("session id: {}", sessionId);
 
         String activeAgent = chatSession.getActiveAgent(sessionId, userId, tenantId);
+
+        //needs to be a local instance to patch the active agent record in a thread-safe manner
+        AgentTransfer agentTransfer = new AgentTransfer(chatSession, sessionId, userId, tenantId);
+
         logger.info("Active agent: {}", activeAgent);
 
-        // Route if unknown
+        // Route if agent unknown
         if (activeAgent.equals("unknown")) {
             Map<String, String> routes = new HashMap<>();
             for (Agent agent : agents.values()) {
                 routes.put(agent.getName(), agent.getSystemPrompt());
             }
             activeAgent = agentRouting.route(input, routes);
-            this.agentTransfer.transferAgent(activeAgent, sessionId, userId, tenantId);
+            agentTransfer.transferAgent(activeAgent);
         }
 
         logger.info("Agent to use: {}", activeAgent);
         Agent agent = agents.get(activeAgent);
+        agentTransfer.setRoutableAgents(agent.getRoutableAgents());
+
+        List<Object> tools = new ArrayList<>();
+        for (Object tool : agent.getTools()) {
+            tools.add(tool);
+        }
+        tools.add(agentTransfer);
 
         // Build and call the chat client
         String response = ChatClient.builder(chatModel)
                 .build()
-                .prompt(agent.getSystemPrompt() + "tenantId: " + tenantId + " userId: " + userId + " sessionId: " + sessionId)
+                .prompt(agent.getSystemPrompt())
                 .advisors(new MessageChatMemoryAdvisor(chatMemory))
                 .user(input)
-                .tools(agent.getTools().toArray())
+                .tools(tools.toArray())
                 .call()
                 .content();
 

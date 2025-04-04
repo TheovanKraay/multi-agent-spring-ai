@@ -3,6 +3,8 @@ package com.cosmos.multiagent.api;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.azure.spring.data.cosmos.config.AbstractCosmosConfiguration;
+import com.azure.spring.data.cosmos.repository.config.EnableCosmosRepositories;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
 import org.springframework.ai.chat.client.ChatClient;
@@ -17,7 +19,8 @@ import org.springframework.context.annotation.Configuration;
 import java.util.List;
 
 @Configuration
-public class MultiAgentConfig {
+@EnableCosmosRepositories(basePackages = "com.cosmos.multiagent.repository")
+public class MultiAgentConfig extends AbstractCosmosConfiguration {
 
     @Bean
     public CosmosAsyncClient cosmosAsyncClient() {
@@ -36,6 +39,11 @@ public class MultiAgentConfig {
     @Bean
     public ObservationRegistry observationRegistry() {
         return ObservationRegistry.create();
+    }
+
+    @Override
+    protected String getDatabaseName() {
+        return "MultiAgentDb";
     }
 
     @Bean
