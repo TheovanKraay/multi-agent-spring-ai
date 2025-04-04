@@ -21,9 +21,6 @@ public class AgentOrchestrator {
     logger = LoggerFactory.getLogger(AgentOrchestrator.class);
     private final Map<String, Agent> agents = new ConcurrentHashMap<>();
     private final CosmosChatMemory chatMemory;
-    private final String sessionId;
-    private final String userId;
-    private final String tenantId;
     private final CosmosChatSession chatSession;
     private final ChatModel chatModel;
 
@@ -32,24 +29,17 @@ public class AgentOrchestrator {
     AgentTransfer agentTransfer;
     AgentRouting agentRouting;
 
-    public AgentOrchestrator(String sessionId, String userId, String tenantId, CosmosChatSession chatSession, CosmosChatMemory chatMemory, ChatModel chatModel) {
-        this.sessionId = sessionId;
-        this.userId = userId;
-        this.tenantId = tenantId;
+    public AgentOrchestrator(CosmosChatSession chatSession, CosmosChatMemory chatMemory, ChatModel chatModel) {
         this.chatSession = chatSession;
         this.chatMemory = chatMemory;
         this.chatModel = chatModel;
         this.chatClient = ChatClient.create(chatModel);
-        this.agentTransfer = new AgentTransfer(chatSession, sessionId, userId, tenantId);
+        this.agentTransfer = new AgentTransfer(chatSession);
         this.agentRouting = new AgentRouting(this.chatClient);
     }
 
     public void registerAgent(Agent agent) {
         agents.put(agent.getName(), agent);
-    }
-
-    public List<Message> handleUserInput(String input) {
-        return handleUserInput(input, this.sessionId, this.userId, this.tenantId, true);
     }
 
     public List<Message> handleUserInput(String input, String sessionId, String userId, String tenantId, boolean saveChatMemory) {

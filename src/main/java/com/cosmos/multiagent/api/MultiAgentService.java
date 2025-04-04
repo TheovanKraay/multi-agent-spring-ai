@@ -54,12 +54,7 @@ public class MultiAgentService {
     public void initialize() {
         chatMemory = new CosmosChatMemory(cosmosAsyncClient, COSMOS_DB_NAME);
         chatSession = new CosmosChatSession(cosmosAsyncClient, COSMOS_DB_NAME);
-
-        String dummyUserId = "system";
-        String dummyTenantId = "default";
-        String dummySessionId = chatSession.createSessionId(dummyUserId, dummyTenantId);
-
-        orchestrator = new AgentOrchestrator(dummySessionId, dummyUserId, dummyTenantId, chatSession, chatMemory, chatModel);
+        orchestrator = new AgentOrchestrator(chatSession, chatMemory, chatModel);
 
         List<String> allAgents = List.of("timeteller", "joketeller", "mathassistant", "productsearch");
 
@@ -70,7 +65,7 @@ public class MultiAgentService {
                 "\"for the question being asked, plus the tenantId, userId, and sessionId.",
                 List.of(
                 new DateTimeTools(),
-                agentTransfersAllowed("timeteller", allAgents, dummyUserId, dummyTenantId, dummySessionId)
+                agentTransfersAllowed("timeteller", allAgents)
         ));
 
         Agent jokeAgent = new Agent("joketeller",
@@ -79,7 +74,7 @@ public class MultiAgentService {
                 "\"determine which agents you can call, then transferAgent() passing the appropriate agent\" +\n" +
                 "\"for the question being asked, plus the tenantId, userId, and sessionId.",
                 List.of(new TellJokeTools(),
-                agentTransfersAllowed("joketeller", allAgents, dummyUserId, dummyTenantId, dummySessionId)
+                agentTransfersAllowed("joketeller", allAgents)
         ));
 
         Agent mathAgent = new Agent("mathassistant",
@@ -88,7 +83,7 @@ public class MultiAgentService {
                 "\"determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
                 "\"for the question being asked, plus the tenantId, userId, and sessionId.",
                 List.of(new MathAssistantTools(),
-                agentTransfersAllowed("mathassistant", allAgents, dummyUserId, dummyTenantId, dummySessionId)
+                agentTransfersAllowed("mathassistant", allAgents)
         ));
 
         Agent productAgent = new Agent("productsearch",
@@ -98,7 +93,7 @@ public class MultiAgentService {
                 "\"determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
                 "\"for the question being asked, plus the tenantId, userId, and sessionId.",
                 List.of(new ProductSearchTools(vectorStore),
-                agentTransfersAllowed("productsearch", allAgents, dummyUserId, dummyTenantId, dummySessionId)
+                agentTransfersAllowed("productsearch", allAgents)
         ));
 
         orchestrator.registerAgent(timeAgent);
@@ -107,8 +102,8 @@ public class MultiAgentService {
         orchestrator.registerAgent(productAgent);
     }
 
-    private AgentTransfer agentTransfersAllowed(String currentAgent, List<String> allAgents, String userId, String tenantId, String sessionId) {
-        AgentTransfer transfer = new AgentTransfer(chatSession, sessionId, userId, tenantId);
+    private AgentTransfer agentTransfersAllowed(String currentAgent, List<String> allAgents) {
+        AgentTransfer transfer = new AgentTransfer(chatSession);
         transfer.setRoutableAgents(allAgents.stream().filter(a -> !a.equals(currentAgent)).toList());
         return transfer;
     }

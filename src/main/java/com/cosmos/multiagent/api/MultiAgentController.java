@@ -16,12 +16,6 @@ public class MultiAgentController {
     @Autowired
     private MultiAgentService multiAgentService;
 
-    @PostMapping
-    public List<Message> handleUserInput(@RequestParam String input) {
-        AgentOrchestrator orchestrator = multiAgentService.getOrchestrator();
-        return orchestrator.handleUserInput(input);
-    }
-
     @PostMapping("/tenant/{tenantId}/user/{userId}/session/{sessionId}/completion")
     public List<Message> completion(@RequestParam String input, @PathVariable String userId, @PathVariable String tenantId, @PathVariable String sessionId) {
         AgentOrchestrator orchestrator = multiAgentService.getOrchestrator();

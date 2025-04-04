@@ -29,25 +29,36 @@ public class CosmosChatMemory implements ChatMemory {
 
     @Override
     public void add(String conversationId, List<Message> messages) {
-        List<Mono<CosmosItemResponse<Object>>> tasks = new ArrayList<>();
-
         System.out.println("Adding messages to Cosmos DB: " + conversationId);
-        for (Message message : messages) {
-            if (!(message instanceof ChatMessage)) {
-                continue; // skip unknown message types
-            }
-            ChatMessage chatMessage = (ChatMessage) message;
-            Map<String, Object> doc = new HashMap<>();
-            doc.put("id", UUID.randomUUID().toString());
-            doc.put("conversationId", conversationId);
-            doc.put("role", chatMessage.getRole());
-            doc.put("text", chatMessage.getText());
-            //container.createItem(doc, new PartitionKey(conversationId), new CosmosItemRequestOptions()).block();
-            tasks.add(container.createItem(doc, new PartitionKey(conversationId), new CosmosItemRequestOptions()));
-        }
 
-        // Block until all items are created
-        Mono.when(tasks).block();
+        if (messages.size() > 10) {
+            // Bulk execution
+            List<Mono<CosmosItemResponse<Object>>> tasks = new ArrayList<>();
+            for (Message message : messages) {
+                if (!(message instanceof ChatMessage)) {
+                    continue;
+                }
+                tasks.add(createItemMono((ChatMessage) message, conversationId));
+            }
+            Mono.when(tasks).block();
+        } else {
+            // Individual execution
+            for (Message message : messages) {
+                if (!(message instanceof ChatMessage)) {
+                    continue;
+                }
+                createItemMono((ChatMessage) message, conversationId).block();
+            }
+        }
+    }
+
+    private Mono<CosmosItemResponse<Object>> createItemMono(ChatMessage chatMessage, String conversationId) {
+        Map<String, Object> doc = new HashMap<>();
+        doc.put("id", UUID.randomUUID().toString());
+        doc.put("conversationId", conversationId);
+        doc.put("role", chatMessage.getRole());
+        doc.put("text", chatMessage.getText());
+        return container.createItem(doc, new PartitionKey(conversationId), new CosmosItemRequestOptions());
     }
 
     @Override

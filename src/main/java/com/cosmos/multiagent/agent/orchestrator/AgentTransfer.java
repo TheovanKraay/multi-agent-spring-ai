@@ -8,9 +8,6 @@ import java.util.List;
 public class AgentTransfer {
 
     private CosmosChatSession chatSession;
-    private String sessionId;
-    private String userId;
-    private String tenantId;
 
     @Tool(description = "Get routable agents")
     public List<String> getRoutableAgents() {
@@ -23,17 +20,9 @@ public class AgentTransfer {
     }
 
     private List<String > routableAgents = new ArrayList<>();
-    public AgentTransfer(CosmosChatSession chatSession, String sessionId, String userId, String tenantId) {
+    public AgentTransfer(CosmosChatSession chatSession) {
         this.chatSession = chatSession;
-        this.sessionId = sessionId;
-        this.userId = userId;
-        this.tenantId = tenantId;
     }
-
-/*    @Tool(description = "Transfer agent to another agent")
-    String transferAgent(String agentName) {
-        chatSession.patchActiveAgent(this.sessionId, this.userId, this.tenantId,  agentName);
-        return "Agent transferred to " + agentName;}*/
 
     @Tool(description = "Transfer agent to another agent")
     String transferAgent(String agentName, String sessionId, String userId, String tenantId) {

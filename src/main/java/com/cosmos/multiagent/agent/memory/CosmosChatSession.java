@@ -90,7 +90,6 @@ public class CosmosChatSession {
     }
     public String getActiveAgent(String sessionId, String userId, String tenantId) {
         return container.readItem(sessionId, new PartitionKeyBuilder().add(tenantId).add(userId).add(sessionId).build(), ChatSession.class).block().getItem().getActiveAgent();
-        //return container.readItem(sessionId, new PartitionKey(sessionId), ChatSession.class).block().getItem().getActiveAgent();
     }
 
     public List<ChatSession> getSessions(String userId, String tenantId) {
