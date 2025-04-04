@@ -1,0 +1,37 @@
+[
+  {
+    "product_id": 1,
+    "product_name": "Ray-Ban Backpack",
+    "category": "Fashion & Accessories",
+    "product_description": "A sleek and stylish backpack designed for modern lifestyles. Crafted with durable materials, it offers ample storage space, comfortable straps, and a timeless design perfect for work, travel, or everyday use.",
+    "price": "89.99"
+  },
+  {
+    "product_id": 2,
+    "product_name": "Leuchtturm1917 Desk Organizer",
+    "category": "Books & Stationery",
+    "product_description": "The Leuchtturm1917 Desk Organizer is a sleek and functional solution for keeping your workspace tidy. Designed with premium materials, it offers ample compartments to store your stationery, notebooks, and other essentials, ensuring everything is within easy reach. Perfect for professionals, students, and creatives alike.",
+    "price": "29.99"
+  },
+  {
+    "product_id": 3,
+    "product_name": "Fitbit Treadmill",
+    "category": "Fitness & Health",
+    "product_description": "The Fitbit Treadmill is a state-of-the-art fitness machine designed to help you achieve your health goals. With advanced tracking features, customizable workout programs, and a sleek design, it\u2019s perfect for both beginners and seasoned athletes.",
+    "price": "999.99"
+  },
+  {
+    "product_id": 4,
+    "product_name": "LG Camera",
+    "category": "Electronics",
+    "product_description": "Capture stunning photos and videos with the LG Camera, featuring advanced imaging technology, high-resolution lenses, and user-friendly controls for both professionals and hobbyists.",
+    "price": "499.99"
+  },
+  {
+    "product_id": 5,
+    "product_name": "Field Notes Planner",
+    "category": "Books & Stationery",
+    "product_description": "A compact and stylish planner designed to help you organize your daily tasks, appointments, and goals. Perfect for professionals, students, and anyone who values productivity and organization.",
+    "price": "19.99"
+  }
+]

@@ -10,7 +10,7 @@ public class NotifyCustomer {
     private final UsersRepository usersRepository;
 
     private static final org.slf4j.Logger
-            logger = LoggerFactory.getLogger(DateTimeTools.class);
+            logger = LoggerFactory.getLogger(NotifyCustomer.class);
 
     public NotifyCustomer(UsersRepository usersRepository) {
         this.usersRepository = usersRepository;

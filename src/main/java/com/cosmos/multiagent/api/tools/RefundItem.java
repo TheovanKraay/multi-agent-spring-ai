@@ -1,0 +1,58 @@
+package com.cosmos.multiagent.api.tools;
+
+import com.azure.cosmos.models.CosmosPatchOperations;
+import com.azure.cosmos.models.PartitionKey;
+import com.cosmos.multiagent.repository.Products;
+import com.cosmos.multiagent.repository.ProductRepository;
+import com.cosmos.multiagent.repository.PurchaseHistory;
+import com.cosmos.multiagent.repository.PurchaseHistoryRepository;
+import com.cosmos.multiagent.repository.UsersRepository;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.tool.annotation.Tool;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+
+public class RefundItem {
+
+    private final PurchaseHistoryRepository purchaseHistoryRepository;
+
+    private static final org.slf4j.Logger
+            logger = LoggerFactory.getLogger(OrderItem.class);
+
+    public RefundItem(PurchaseHistoryRepository purchaseHistoryRepository) {
+        this.purchaseHistoryRepository = purchaseHistoryRepository;
+    }
+
+    @Tool(description = "Refund an item")
+    public String refundItem(String userId, String itemId) {
+        logger.info("Called refundItem() tool");
+        try {
+            List<PurchaseHistory> results = purchaseHistoryRepository.findByItemId(itemId);
+            PurchaseHistory purchasedItem = results.isEmpty() ? null : results.get(0);
+            if (results != null) {
+                String dateOfRefund = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+                        .withZone(ZoneOffset.UTC)
+                        .format(Instant.now());
+                purchasedItem.setDateOfRefund(dateOfRefund);
+                purchaseHistoryRepository.save(purchasedItem);
+                return String.format(
+                        "Refund processed for product %s for user ID %s. Item ID: %s.",
+                        purchasedItem.getItemId(), userId, itemId
+                );
+            } else {
+                return String.format("Item ID %s not found in purchase history.", itemId);
+            }
+
+
+        } catch (Exception e) {
+            logger.error("Error ordering item: ", e);
+            return "An error occurred during order placement: " + e.getMessage();
+        }
+    }
+}

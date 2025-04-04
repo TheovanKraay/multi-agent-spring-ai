@@ -25,7 +25,11 @@ java -jar target/multiagent-dataloader.jar
 ```
 
 
-### Test
+### Test via CLI
 ```shell
 java -jar target/multiagent-cli.jar
 ```
+
+### Test vi UI
+
+http://localhost:8080

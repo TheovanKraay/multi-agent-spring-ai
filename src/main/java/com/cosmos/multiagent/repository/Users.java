@@ -29,7 +29,7 @@ public class Users {
     public void setUserId(String user_id) {
         this.userId = user_id;
     }
-    public String getFirst_name() {
+    public String getFirstName() {
         return firstName;
     }
     public void setFirstName(String first_name) {

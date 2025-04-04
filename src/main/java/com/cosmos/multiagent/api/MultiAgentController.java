@@ -43,7 +43,7 @@ public class MultiAgentController {
         multiAgentService.getChatMemory().clear(sessionId);
     }
 
-    @GetMapping("/data")
+    @PutMapping("/data")
     public void dataLoad() throws IOException {
         multiAgentService.dataLoad();
     }

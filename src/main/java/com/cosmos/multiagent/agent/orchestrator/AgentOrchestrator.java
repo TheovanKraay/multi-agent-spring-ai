@@ -75,7 +75,7 @@ public class AgentOrchestrator {
         String response = ChatClient.builder(chatModel)
                 .build()
                 .prompt(agent.getSystemPrompt())
-                .advisors(new MessageChatMemoryAdvisor(chatMemory))
+                .advisors(new MessageChatMemoryAdvisor(chatMemory, sessionId, 100))
                 .user(input)
                 .tools(tools.toArray())
                 .call()

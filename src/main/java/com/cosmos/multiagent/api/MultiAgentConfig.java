@@ -43,7 +43,7 @@ public class MultiAgentConfig extends AbstractCosmosConfiguration {
 
     @Override
     protected String getDatabaseName() {
-        return "MultiAgentDb";
+        return "MultiAgentDB";
     }
 
     @Bean
@@ -53,7 +53,7 @@ public class MultiAgentConfig extends AbstractCosmosConfiguration {
             EmbeddingModel embeddingModel
     ) {
         return CosmosDBVectorStore.builder(cosmosAsyncClient, embeddingModel)
-                .databaseName("MultiAgentDb")
+                .databaseName("MultiAgentDB")
                 .containerName("Products")
                 .metadataFields(List.of("product_id"))
                 .partitionKeyPath("/id")

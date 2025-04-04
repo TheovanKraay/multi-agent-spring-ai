@@ -6,15 +6,17 @@ import com.cosmos.multiagent.agent.memory.CosmosChatMemory;
 import com.cosmos.multiagent.agent.memory.CosmosChatSession;
 import com.cosmos.multiagent.agent.models.ChatSession;
 import com.cosmos.multiagent.agent.orchestrator.AgentOrchestrator;
-import com.cosmos.multiagent.agent.orchestrator.AgentTransfer;
+import com.cosmos.multiagent.api.tools.OrderItem;
+import com.cosmos.multiagent.api.tools.RefundItem;
+import com.cosmos.multiagent.repository.ProductRepository;
+import com.cosmos.multiagent.repository.PurchaseHistoryRepository;
+import com.cosmos.multiagent.repository.Users;
 import com.cosmos.multiagent.repository.UsersRepository;
-import com.cosmos.multiagent.api.tools.DateTimeTools;
-import com.cosmos.multiagent.api.tools.MathAssistantTools;
 import com.cosmos.multiagent.api.tools.NotifyCustomer;
-import com.cosmos.multiagent.api.tools.ProductSearchTools;
-import com.cosmos.multiagent.api.tools.TellJokeTools;
+import com.cosmos.multiagent.api.tools.ProductSearch;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
@@ -33,6 +35,9 @@ import java.util.*;
 @Service
 public class MultiAgentService {
 
+    private static final org.slf4j.Logger
+    logger = LoggerFactory.getLogger(MultiAgentService.class);
+
     @Autowired
     private EmbeddingModel embeddingModel;
 
@@ -48,7 +53,13 @@ public class MultiAgentService {
     @Autowired
     private UsersRepository usersRepository;
 
-    private static final String COSMOS_DB_NAME = "MultiAgentDb";
+    @Autowired
+    private PurchaseHistoryRepository purchaseHistoryRepository;
+
+    @Autowired
+    private ProductRepository productsRepository;
+
+    private static final String COSMOS_DB_NAME = "MultiAgentDB";
 
     private AgentOrchestrator orchestrator;
     private CosmosChatMemory chatMemory;
@@ -62,44 +73,36 @@ public class MultiAgentService {
         chatSession = new CosmosChatSession(cosmosAsyncClient, COSMOS_DB_NAME);
         orchestrator = new AgentOrchestrator(chatSession, chatMemory, chatModel);
 
-        List<String> allAgents = List.of("timeteller", "joketeller", "mathassistant", "productsearch", "Refunds");
+        List<String> allAgents = List.of("Sales", "Product", "Refunds");
 
-        Agent timeAgent = new Agent("timeteller",
-                "You are a time teller assistant. Call getCurrentDateTime()\"+\n" +
-                "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
-                "\"determine which agents you can call, then transferAgent() passing the appropriate agent\" +\n" +
-                "\"for the question being asked, plus the tenantId, userId, and sessionId.",
-                List.of(
-                new DateTimeTools()),
-                agentTransfersAllowed("timeteller", allAgents)
-        );
 
-        Agent jokeAgent = new Agent("joketeller",
-                "You are a funny assistant that can tell the user a joke. Call TellJokeTools()\" +\n" +
-                "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
-                "\"determine which agents you can call, then transferAgent() passing the appropriate agent\" +\n" +
-                "\"for the question being asked.",
-                List.of(new TellJokeTools()),
-                agentTransfersAllowed("joketeller", allAgents)
-        );
-
-        Agent mathAgent = new Agent("mathassistant",
-                "You can help the user with sums. Ask user which numbers they want to add together. Call addNumbers()\"+\n" +
-                "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
-                "\"determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
-                "\"for the question being asked.",
-                List.of(new MathAssistantTools()),
-                agentTransfersAllowed("mathassistant", allAgents)
-        );
-
-        Agent productAgent = new Agent("productsearch",
+        Agent productAgent = new Agent("Product",
                 "You can help the user search for products. Ask for what products the user is " +
                 "interested in. Call productSearch() and pass in the user's question as an argument.\"+\n" +
+                "\"Make sure you output the Product ID that comes back for each product.\" +\n" +
+                "\"If the user wants to order one of the products, transfer to Sales\" +\n" +
                 "\"You can also transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
-                "\"determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
+                "\"determine which agents you can call, then call transferAgent() tool passing the appropriate agent\" +\n" +
                 "\"for the question being asked",
-                List.of(new ProductSearchTools(vectorStore)),
-                agentTransfersAllowed("productsearch", allAgents)
+                List.of(new ProductSearch(vectorStore)),
+                agentTransfersAllowed("Product", allAgents)
+        );
+
+        Agent salesAgent = new Agent("Sales",
+        "You are a sales agent.\n" +
+                "    For now all you can do is order an item, or transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
+                "    determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
+                "    for the question being asked" +
+                "    If the user wants to order an item, you must ask for the user id and item id.\n" +
+                "    If the context information shows that the user has asked for product information," +
+                "    Then get the item id from there (it will be the Product ID) but confirm with the user." +
+                "    Then call the orderItem() tool passing userId and itemId to it, and return the result. " +
+                "    If the user wants to be notified of the sale, ask for the notification method (email or phone) and user Id " +
+                "    (unless user id is already present in context information, then get it from there)." +
+                "    Then call the notifyCustomer() method passing userId and method values to it. " +
+                "    If the user wants a refund, transfer to Refunds. ",
+                List.of(new NotifyCustomer(usersRepository), new OrderItem(purchaseHistoryRepository, productsRepository)),
+                agentTransfersAllowed("Sales", allAgents)
         );
 
         Agent refundsAgent = new Agent("Refunds",
@@ -107,18 +110,22 @@ public class MultiAgentService {
                 "    For now all you can do is arrange a refund or transfer the user to another agent by calling getRoutableAgents() to \" +\n" +
                 "    determine which agents you can call, then call transferAgent() passing the appropriate agent\" +\n" +
                 "    for the question being asked" +
-                "    If the user asks for a refund, you must ask what their preferred method of notification is and user id in one message.\n" +
+                "    If the user wants a refund, you must ask for the user id and item id.\n" +
+                "    If the context information shows that the user has asked for product information," +
+                "    then get the item id from there (it will be the Product ID) but confirm with the user." +
+                "    Then call the refundItem() tool passing userId and itemId to it, and return the result. " +
+                "    If the user wants to be notified of the refund, ask for the notification method (email or phone) and user Id " +
+                "    (unless user id is already present in context information, then get it from there)." +
                 "    Then call the notifyCustomer() method passing userId and method values to it. " +
-                "    You must return the response from notifyCustomer() to the user \n" ,
-                List.of(new NotifyCustomer(usersRepository)),
+                "    You must return the response from refundItem() to the user, and notifyCustomer() method if called. \n" ,
+                List.of(new NotifyCustomer(usersRepository), new RefundItem(purchaseHistoryRepository)),
                 agentTransfersAllowed("Refunds", allAgents)
         );
 
-        orchestrator.registerAgent(timeAgent);
-        orchestrator.registerAgent(jokeAgent);
-        orchestrator.registerAgent(mathAgent);
         orchestrator.registerAgent(productAgent);
+        orchestrator.registerAgent(salesAgent);
         orchestrator.registerAgent(refundsAgent);
+
     }
     /**
      * This method returns a list of agents that the current agent can transfer to.
@@ -156,6 +163,7 @@ public class MultiAgentService {
     }
 
     public void dataLoad() throws IOException {
+        logger.info("Loading fake data....");
         ObjectMapper mapper = new ObjectMapper();
         InputStream inputStream = new ClassPathResource("data/products.json").getInputStream();
 
@@ -171,10 +179,20 @@ public class MultiAgentService {
             content.append("Price: ").append(product.get("price"));
 
             Document doc = new Document(content.toString());
-            doc.getMetadata().put("product_id", product.get("product_id").toString());
-            doc.getMetadata().put("product_name", product.get("product_name").toString());
+            doc.getMetadata().put("productId", product.get("product_id").toString());
+            doc.getMetadata().put("productName", product.get("product_name").toString());
+            doc.getMetadata().put("category", product.get("category").toString());
+            doc.getMetadata().put("price", product.get("price").toString());
             documents.add(doc);
         }
         vectorStore.add(documents);
+        Users user = new Users();
+        user.setId("1");
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setEmail("email@somebody.com");
+        user.setPhone("990-00090000");
+        usersRepository.save(user);
+        logger.info("Data loaded into vector store and Users container.");
     }
 }

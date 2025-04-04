@@ -8,12 +8,12 @@ import org.springframework.ai.vectorstore.VectorStore;
 
 import java.util.List;
 
-public class ProductSearchTools {
+public class ProductSearch {
     private static final org.slf4j.Logger
-    logger = LoggerFactory.getLogger(ProductSearchTools.class);
+    logger = LoggerFactory.getLogger(ProductSearch.class);
 
     private VectorStore vectorStore;
-    public ProductSearchTools(VectorStore vectorStore) {
+    public ProductSearch(VectorStore vectorStore) {
         this.vectorStore = vectorStore;
     }
 
