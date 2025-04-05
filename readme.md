@@ -28,6 +28,8 @@ The personal shopper example includes 3 agents to handle various customer servic
 - [Azure Cosmos DB account](https://learn.microsoft.com/azure/cosmos-db/create-cosmosdb-resources-portal) - ensure the [vector search](https://learn.microsoft.com/azure/cosmos-db/nosql/vector-search) feature is enabled.
 - [Azure OpenAI API key](https://learn.microsoft.com/azure/ai-services/openai/overview) and endpoint.
 - [Azure OpenAI Embedding Deployment ID](https://learn.microsoft.com/azure/ai-services/openai/overview) for the RAG model.
+- [Maven](https://maven.apache.org/install.html) 3.8.1 or later installed.
+- [Java 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) or later installed.
 
 ## Setup
 
