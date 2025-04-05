@@ -1,6 +1,6 @@
 # Multi-agent Java sample with Spring AI and Azure Cosmos DB
 
-Inspired by Open AI Swarm and LangGraph - a sample personal shopping AI Chatbot that can help with product enquiries, making sales, and refunding orders by transferring to different agents for those tasks.
+Inspired by OpenAI Swarm and LangGraph - a sample personal shopping AI Chatbot that can help with product enquiries, making sales, and refunding orders by transferring to different agents for those tasks.
 
 Features:
 - **Multi-agent**: the sample implements a custom multi-agent orchestration framework using [Spring AI](https://docs.spring.io/spring-ai/reference/) and [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) as building blocks. 
