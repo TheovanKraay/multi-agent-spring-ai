@@ -17,7 +17,7 @@ Features:
 
 ## Overview
 
-The personal shopper example includes 3 agents to handle various customer service requests, and an orchestrator for initial routing. The agents are implemented as Spring beans and use the [Spring AI](https://docs.spring.io/spring-ai/reference/) framework to interact with the Azure OpenAI API. The agents are designed to be modular and can be easily extended or replaced with other implementations.
+The personal shopper example includes 3 agents to handle various customer service requests, and an orchestrator for initial routing. The agents are implemented using [Spring AI](https://docs.spring.io/spring-ai/reference/) framework to interact with the Azure OpenAI API. The agents are designed to be modular and can be easily extended or replaced with other implementations.
 
 1. **Product Agent**: Answers customer queries from the products container using [Retrieval Augmented Generation (RAG)](https://learn.microsoft.com/azure/cosmos-db/gen-ai/rag).
 2. **Refund Agent**: Manages customer refunds, requiring both user ID and item ID to initiate a refund.
