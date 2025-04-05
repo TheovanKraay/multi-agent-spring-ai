@@ -170,14 +170,25 @@ var app = new Vue({
           method: "DELETE",
           headers: API_HEADER
         });
+    
+        // Update chat history locally
+        this.chatHistory.data = this.chatHistory.data.filter(chat => chat.id !== id);
+    
+        if (this.chatHistory.activeChatId === id) {
+          this.chatHistory.activeChatId = this.chatHistory.data.length
+            ? this.chatHistory.data[0].id
+            : null;
+        }
+    
+        // Wait a moment, then reload the page so the UI refreshes
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+    
       } catch (err) {
         console.warn("Failed to delete session:", err);
       }
-
-      this.chatHistory.data = this.chatHistory.data.filter(chat => chat.id !== id);
-      if (this.chatHistory.activeChatId === id) {
-        this.chatHistory.activeChatId = this.chatHistory.data.length ? this.chatHistory.data[0].id : null;
-      }
-    }
+    },
+    
   }
 });
