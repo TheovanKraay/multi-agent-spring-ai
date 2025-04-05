@@ -8,7 +8,7 @@ Features:
 - **Retrieval Augmented Generation (RAG)**: the sample uses [vector search](https://learn.microsoft.com/azure/cosmos-db/nosql/vector-search) in Azure Cosmos DB with powerful [DiskANN index](https://www.microsoft.com/en-us/research/publication/diskann-fast-accurate-billion-point-nearest-neighbor-search-on-a-single-node/?msockid=091c323873cd6bd6392120ac72e46a98) to serve product enquiries from the same database that is used for transactions. Implemented via the [Spring AI vector store plugin for Azure Cosmos DB](https://docs.spring.io/spring-ai/reference/api/vectordbs/azure-cosmos-db.html).
 - **Long term chat memory persistence**: the sample implements Spring AI's `ChatMemory` interface to store and manage long term chat memory for each user session in Azure Cosmos DB.
 - **Multi-tenant/user session storage**: [Hierarchical Partitioning](https://learn.microsoft.com/azure/cosmos-db/hierarchical-partition-keys) is used in Azure Cosmos DB to store and manage each user session, this is integrated into the UI. A "default" `tenantId` is used, and the user's local IP address is capatured as the `userId`.
-- **UI**: front end is built as a single-page application (SPA) using HTML, CSS, and JavaScript located in the resources/static folder, which interacts with the backend via REST API endpoints exposed by the Spring Boot application.
+- **UI**: front end is built as a single-page application (SPA) using HTML, CSS, and JavaScript located in the resources/static folder. The UI talks to REST API endpoints exposed by the backend Spring Boot application.
 
 
 ## UI demo
