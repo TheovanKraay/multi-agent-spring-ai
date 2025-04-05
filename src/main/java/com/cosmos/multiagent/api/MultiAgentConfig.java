@@ -13,6 +13,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.cosmosdb.CosmosDBVectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,10 +23,16 @@ import java.util.List;
 @EnableCosmosRepositories(basePackages = "com.cosmos.multiagent.repository")
 public class MultiAgentConfig extends AbstractCosmosConfiguration {
 
+    @Value("${spring.cloud.azure.cosmos.endpoint}")
+    private String cosmosEndpoint;
+
+    @Value("${spring.cloud.azure.cosmos.database.name}")
+    private String databaseName;
+
     @Bean
     public CosmosAsyncClient cosmosAsyncClient() {
         return new CosmosClientBuilder()
-                .endpoint(System.getenv("AZURE_COSMOSDB_ENDPOINT"))
+                .endpoint(cosmosEndpoint)
                 .credential(new DefaultAzureCredentialBuilder().build())
                 .contentResponseOnWriteEnabled(true)
                 .buildAsyncClient();
@@ -43,7 +50,8 @@ public class MultiAgentConfig extends AbstractCosmosConfiguration {
 
     @Override
     protected String getDatabaseName() {
-        return "MultiAgentDB";
+        //return "MultiAgentDB";
+        return this.databaseName;
     }
 
     @Bean
@@ -53,7 +61,7 @@ public class MultiAgentConfig extends AbstractCosmosConfiguration {
             EmbeddingModel embeddingModel
     ) {
         return CosmosDBVectorStore.builder(cosmosAsyncClient, embeddingModel)
-                .databaseName("MultiAgentDB")
+                .databaseName(getDatabaseName())
                 .containerName("Products")
                 .metadataFields(List.of("product_id"))
                 .partitionKeyPath("/id")

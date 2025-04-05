@@ -15,14 +15,6 @@ public class Products {
 
     private Metadata metadata;
 
-
-
-/*    public Products(String id, String content, Metadata metadata) {
-        this.id = id;
-        this.content = content;
-        this.metadata = metadata;
-    }*/
-
     // Getters and setters
     public String getId() {
         return id;

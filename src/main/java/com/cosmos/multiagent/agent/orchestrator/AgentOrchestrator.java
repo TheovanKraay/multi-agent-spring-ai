@@ -37,7 +37,7 @@ public class AgentOrchestrator {
     }
 
     public void registerAgent(Agent agent) {
-        agents.put(agent.getName(), agent);
+        agents.put(agent.name(), agent);
     }
 
     public List<Message> handleUserInput(String input, String sessionId, String userId, String tenantId, boolean saveChatMemory) {
@@ -55,7 +55,7 @@ public class AgentOrchestrator {
         if (activeAgent.equals("unknown")) {
             Map<String, String> routes = new HashMap<>();
             for (Agent agent : agents.values()) {
-                routes.put(agent.getName(), agent.getSystemPrompt());
+                routes.put(agent.name(), agent.systemPrompt());
             }
             activeAgent = agentRouting.route(input, routes);
             agentTransfer.transferAgent(activeAgent);
@@ -63,10 +63,10 @@ public class AgentOrchestrator {
 
         logger.info("Agent to use: {}", activeAgent);
         Agent agent = agents.get(activeAgent);
-        agentTransfer.setRoutableAgents(agent.getRoutableAgents());
+        agentTransfer.setRoutableAgents(agent.routableAgents());
 
         List<Object> tools = new ArrayList<>();
-        for (Object tool : agent.getTools()) {
+        for (Object tool : agent.tools()) {
             tools.add(tool);
         }
         tools.add(agentTransfer);
@@ -74,7 +74,7 @@ public class AgentOrchestrator {
         // Build and call the chat client
         String response = ChatClient.builder(chatModel)
                 .build()
-                .prompt(agent.getSystemPrompt())
+                .prompt(agent.systemPrompt())
                 .advisors(new MessageChatMemoryAdvisor(chatMemory, sessionId, 100))
                 .user(input)
                 .tools(tools.toArray())
