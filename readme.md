@@ -46,13 +46,24 @@ AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_EMBEDDINGDEPLOYMENTID=your_azure_openai_embeddingdeploymentid
 ```
 
+
+
 ## Running the app
+
+### Authenticate
+
+The sample uses [DefaultAzureCredential](https://learn.microsoft.com/java/api/overview/azure/identity-readme?view=azure-java-stable#authenticate-a-user-assigned-managed-identity-with-defaultazurecredential) when connecting to Azure Cosmos DB. Be sure you have appropriate [data plane RBAC access to your Azure Cosmos DB account](https://learn.microsoft.com/azure/cosmos-db/nosql/security/how-to-grant-data-plane-role-based-access?tabs=built-in-definition%2Ccsharp&pivots=azure-interface-cli), then authenticate to Azure locally:
+
+```shell
+az login
+```
 
 ### Compile
 
 ```shell
 mvn clean package
 ```
+
 
 ### Start the web server
 
