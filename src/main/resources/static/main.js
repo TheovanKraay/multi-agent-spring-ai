@@ -1,4 +1,5 @@
-
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 // Inject v-cloak CSS to prevent {{ }} from showing before Vue mounts
 const cloakStyle = document.createElement('style');
 cloakStyle.innerHTML = '[v-cloak] { display: none; }';

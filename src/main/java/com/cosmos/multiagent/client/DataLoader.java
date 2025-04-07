@@ -1,6 +1,7 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 package com.cosmos.multiagent.client;
 
-import com.cosmos.multiagent.agent.memory.CosmosChatSession;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;

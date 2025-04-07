@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 package com.cosmos.multiagent.api.tools;
 
 import com.cosmos.multiagent.repository.PurchaseHistory;
@@ -15,7 +17,7 @@ public class RefundItem {
     private final PurchaseHistoryRepository purchaseHistoryRepository;
 
     private static final org.slf4j.Logger
-            logger = LoggerFactory.getLogger(OrderItem.class);
+            logger = LoggerFactory.getLogger(RefundItem.class);
 
     public RefundItem(PurchaseHistoryRepository purchaseHistoryRepository) {
         this.purchaseHistoryRepository = purchaseHistoryRepository;
