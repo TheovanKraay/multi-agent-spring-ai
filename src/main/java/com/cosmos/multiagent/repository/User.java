@@ -4,8 +4,8 @@ import com.azure.spring.data.cosmos.core.mapping.Container;
 import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
 
 @Container
-public class Users {
-    public Users() {
+public class User {
+    public User() {
     }
 
     private String id;

@@ -18,6 +18,7 @@ package com.cosmos.multiagent.agent.orchestrator;
 
 import java.util.Map;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.util.Assert;
 
@@ -77,6 +78,8 @@ import org.springframework.util.Assert;
  *
  */
 public class AgentRouting {
+    private static final org.slf4j.Logger
+    logger = LoggerFactory.getLogger(AgentRouting.class);
 
     private final ChatClient chatClient;
 
@@ -142,7 +145,7 @@ public class AgentRouting {
      */
     @SuppressWarnings("null")
     private String determineRoute(String input, Iterable<String> availableRoutes) {
-        System.out.println("\nAvailable routes: " + availableRoutes);
+        logger.info("Available routes: {}", availableRoutes);
 
         String selectorPrompt = String.format("""
                 Analyze the input and select the most appropriate support team from these options: %s
@@ -157,9 +160,8 @@ public class AgentRouting {
                 Input: %s""", availableRoutes, input);
 
         RoutingResponse routingResponse = chatClient.prompt(selectorPrompt).call().entity(RoutingResponse.class);
-
-        System.out.println(String.format("Routing Analysis:%s\nSelected route: %s",
-                routingResponse.reasoning(), routingResponse.selection()));
+        logger.info("Routing analysis: {}", routingResponse.reasoning());
+        logger.info("Selected route: {}", routingResponse.selection());
 
         return routingResponse.selection();
     }

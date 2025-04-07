@@ -1,7 +1,9 @@
 package com.cosmos.multiagent.client;
 
+import com.cosmos.multiagent.api.tools.ProductSearch;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -14,6 +16,9 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class MultiAgentCliTester {
+
+    private static final org.slf4j.Logger
+    logger = LoggerFactory.getLogger(MultiAgentCliTester.class);
 
     private static final String BASE_URL = "http://localhost:8080/api/chat";
     private static final String TENANT_ID = "default";
@@ -36,10 +41,10 @@ public class MultiAgentCliTester {
             sessionId = sessionReader.readLine().replace("\"", "").trim();
             sessionReader.close();
 
-            System.out.println("Session created with ID: " + sessionId);
+            logger.info("Session created with ID: " + sessionId);
 
         } catch (Exception e) {
-            System.out.println("Failed to create session.");
+            logger.error("Failed to create session.", e);
             e.printStackTrace();
             return;
         }

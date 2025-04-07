@@ -4,6 +4,8 @@ import com.azure.cosmos.*;
 import com.azure.cosmos.models.*;
 import com.azure.cosmos.util.CosmosPagedFlux;
 import com.cosmos.multiagent.agent.models.ChatMessage;
+import com.cosmos.multiagent.api.MultiAgentConfig;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import reactor.core.publisher.Flux;
@@ -16,6 +18,8 @@ import java.util.UUID;
 
 public class CosmosChatMemory implements ChatMemory {
     private final CosmosAsyncContainer container;
+    private static final org.slf4j.Logger
+    logger = LoggerFactory.getLogger(CosmosChatMemory.class);
 
     public CosmosChatMemory(CosmosAsyncClient cosmosAsyncClient, String databaseName) {
         CosmosAsyncDatabase db = cosmosAsyncClient.getDatabase(databaseName);
@@ -29,26 +33,13 @@ public class CosmosChatMemory implements ChatMemory {
 
     @Override
     public void add(String conversationId, List<Message> messages) {
-        System.out.println("Adding messages to Cosmos DB: " + conversationId);
-
-        if (messages.size() > 10) {
-            // Bulk execution
-            List<Mono<CosmosItemResponse<Object>>> tasks = new ArrayList<>();
-            for (Message message : messages) {
-                if (!(message instanceof ChatMessage)) {
-                    continue;
-                }
-                tasks.add(createItemMono((ChatMessage) message, conversationId));
+        logger.info("Adding messages to Cosmos DB: {}", conversationId);
+        // will rarely be more than 2 messages, and usually 1
+        for (Message message : messages) {
+            if (!(message instanceof ChatMessage)) {
+                continue;
             }
-            Mono.when(tasks).block();
-        } else {
-            // Individual execution
-            for (Message message : messages) {
-                if (!(message instanceof ChatMessage)) {
-                    continue;
-                }
-                createItemMono((ChatMessage) message, conversationId).block();
-            }
+            createItemMono((ChatMessage) message, conversationId).block();
         }
     }
 
@@ -121,6 +112,6 @@ public class CosmosChatMemory implements ChatMemory {
                         new PartitionKey(conversationId)))
                 .collect(Collectors.toList());
 
-        container.executeBulkOperations(Flux.fromIterable(operations)).then().block();
+        container.executeBulkOperations(Flux.fromIterable(operations)).subscribe();
     }
 }

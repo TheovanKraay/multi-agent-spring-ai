@@ -23,13 +23,13 @@ public class ProductSearch {
         List<Document> results = this.vectorStore.similaritySearch(SearchRequest.builder().query(searchText).topK(3).build());
         results.forEach(result -> {
             var id = result.getId();
-            System.out.println("id: " + id);
+            logger.info("id: " + id);
         });
         if (results.isEmpty()) {
-            System.out.println("No results found.");
+            logger.info("No results found.");
             return "No results found.";
         }
-        System.out.println("Results: " + results);
+        logger.info("Results: " + results);
         return results.toString();
     }
 }

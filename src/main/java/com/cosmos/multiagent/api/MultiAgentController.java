@@ -39,7 +39,9 @@ public class MultiAgentController {
 
     @DeleteMapping("/tenant/{tenantId}/user/{userId}/session/{sessionId}")
     public void deleteSession(@PathVariable String userId, @PathVariable String tenantId, @PathVariable String sessionId) {
+        // Clearing the chat session record will be a single record and synchronous
         multiAgentService.getChatSession().deleteSession(sessionId, userId, tenantId);
+        // Clearing the chat memory will be asynchronous (subscribe)
         multiAgentService.getChatMemory().clear(sessionId);
     }
 

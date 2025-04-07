@@ -15,6 +15,7 @@ import com.azure.cosmos.models.PartitionKind;
 import com.azure.cosmos.models.ThroughputProperties;
 import com.azure.cosmos.util.CosmosPagedFlux;
 import com.cosmos.multiagent.agent.models.ChatSession;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class CosmosChatSession {
+    private static final org.slf4j.Logger
+    logger = LoggerFactory.getLogger(CosmosChatSession.class);
 
     private final CosmosAsyncContainer container;
 
@@ -81,9 +84,9 @@ public class CosmosChatSession {
             ).block();
 
             ChatSession updatedItem = response.getItem();
-            System.out.println("Patched item: " + updatedItem.getId());
+            logger.info("Patched item: {}", updatedItem.getId());
         } catch (CosmosException e) {
-            System.err.println("Patch failed: " + e.getMessage());
+            logger.error("Patch failed: {}", e.getMessage());
         }
     }
     public String getActiveAgent(String sessionId, String userId, String tenantId) {

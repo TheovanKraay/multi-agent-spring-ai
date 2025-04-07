@@ -10,7 +10,7 @@ import com.cosmos.multiagent.api.tools.OrderItem;
 import com.cosmos.multiagent.api.tools.RefundItem;
 import com.cosmos.multiagent.repository.ProductRepository;
 import com.cosmos.multiagent.repository.PurchaseHistoryRepository;
-import com.cosmos.multiagent.repository.Users;
+import com.cosmos.multiagent.repository.User;
 import com.cosmos.multiagent.repository.UsersRepository;
 import com.cosmos.multiagent.api.tools.NotifyCustomer;
 import com.cosmos.multiagent.api.tools.ProductSearch;
@@ -188,7 +188,7 @@ public class MultiAgentService {
             documents.add(doc);
         }
         vectorStore.add(documents);
-        Users user = new Users();
+        User user = new User();
         user.setId("1");
         user.setUserId("1");
         user.setFirstName("John");

@@ -1,6 +1,6 @@
 package com.cosmos.multiagent.api.tools;
 
-import com.cosmos.multiagent.repository.Products;
+import com.cosmos.multiagent.repository.Product;
 import com.cosmos.multiagent.repository.ProductRepository;
 import com.cosmos.multiagent.repository.PurchaseHistory;
 import com.cosmos.multiagent.repository.PurchaseHistoryRepository;
@@ -32,11 +32,11 @@ public class OrderItem {
     public String orderItem(String userId, String itemId) {
         logger.info("Called orderItem() tool");
         try {
-            List<Products> results = productsRepository.findByProductId(itemId);
-            Optional<Products> productOpt = results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+            List<Product> results = productsRepository.findFirstByMetadata_ProductId(itemId);
+            Optional<Product> productOpt = results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
 
             if (productOpt.isPresent()) {
-                Products product = productOpt.get();
+                Product product = productOpt.get();
 
                 String dateOfPurchase = DateTimeFormatter.ISO_OFFSET_DATE_TIME
                         .withZone(ZoneOffset.UTC)

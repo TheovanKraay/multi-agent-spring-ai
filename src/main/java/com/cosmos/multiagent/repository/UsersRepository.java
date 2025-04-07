@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface UsersRepository extends CosmosRepository<Users, String> {
-    Optional<Users> findByUserId(Integer userId);
+public interface UsersRepository extends CosmosRepository<User, String> {
+    Optional<User> findByUserId(Integer userId);
 }

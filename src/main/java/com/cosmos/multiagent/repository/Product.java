@@ -1,14 +1,16 @@
 package com.cosmos.multiagent.repository;
 
 import com.azure.spring.data.cosmos.core.mapping.Container;
+import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
 import org.springframework.data.annotation.Id;
 
 @Container
-public class Products {
+public class Product {
     // Constructors
-    public Products() {}
+    public Product() {}
 
     @Id
+    @PartitionKey
     private String id;
 
     private String content;
