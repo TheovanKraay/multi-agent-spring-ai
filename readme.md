@@ -26,8 +26,9 @@ The personal shopper example includes 3 agents to handle various customer servic
 ## Prerequisites
 
 - [Azure Cosmos DB account](https://learn.microsoft.com/azure/cosmos-db/create-cosmosdb-resources-portal) - ensure the [vector search](https://learn.microsoft.com/azure/cosmos-db/nosql/vector-search) feature is enabled.
-- [Azure OpenAI API key](https://learn.microsoft.com/azure/ai-services/openai/overview) and endpoint.
-- [Azure OpenAI Embedding Deployment ID](https://learn.microsoft.com/azure/ai-services/openai/overview) for the RAG model.
+- [Azure OpenAI API account](https://learn.microsoft.com/azure/ai-services/openai/overview).
+- [Azure OpenAI Embedding Deployment](https://learn.microsoft.com/azure/ai-services/openai/overview) for the RAG model of `text-embedding-ada-002` (with deployment ID of the same).
+- [Azure OpenAI Chat Deployment](https://learn.microsoft.com/azure/ai-services/openai/overview) for the chat model of `gpt-4o` (with deployment ID of the same).
 - [Maven](https://maven.apache.org/install.html) 3.8.1 or later installed.
 - [Java 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) or later installed.
 
@@ -43,18 +44,19 @@ cd multi-agent-spring-ai
 Ensure you have the following environment variables set:
 ```shell
 AZURE_COSMOSDB_ENDPOINT=your_cosmosdb_account_uri
-AZURE_OPENAI_APIKEY=your_azure_openai_api_key
 AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
-AZURE_OPENAI_EMBEDDINGDEPLOYMENTID=your_azure_openai_embeddingdeploymentid
 ```
 
+Ensure that your Azure OpenAI account has the following models deployed (references in `application.properties`):
 
+- `gpt-4o` for chat
+- `text-embedding-ada-002` for embeddings
 
 ## Running the app
 
 ### Authenticate
 
-The sample uses [DefaultAzureCredential](https://learn.microsoft.com/java/api/overview/azure/identity-readme?view=azure-java-stable#authenticate-a-user-assigned-managed-identity-with-defaultazurecredential) when connecting to Azure Cosmos DB. Be sure you have appropriate [data plane RBAC access to your Azure Cosmos DB account](https://learn.microsoft.com/azure/cosmos-db/nosql/security/how-to-grant-data-plane-role-based-access?tabs=built-in-definition%2Ccsharp&pivots=azure-interface-cli), then authenticate to Azure locally:
+The sample uses [DefaultAzureCredential](https://learn.microsoft.com/java/api/overview/azure/identity-readme?view=azure-java-stable#authenticate-a-user-assigned-managed-identity-with-defaultazurecredential) when connecting to both Azure OpenAI and Azure Cosmos DB. Be sure you have appropriate [data plane RBAC access to your Azure Cosmos DB account](https://learn.microsoft.com/azure/cosmos-db/nosql/security/how-to-grant-data-plane-role-based-access?tabs=built-in-definition%2Ccsharp&pivots=azure-interface-cli) and for your Azure OpenAI account, then authenticate to Azure locally:
 
 ```shell
 az login

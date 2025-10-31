@@ -172,7 +172,7 @@ public class MultiAgentService {
         InputStream inputStream = new ClassPathResource("data/products.json").getInputStream();
 
         List<Map<String, Object>> products = mapper.readValue(inputStream, new TypeReference<>() {});
-        List<Document> documents = new ArrayList<>();
+        List<Document> allDocuments = new ArrayList<>();
 
         for (Map<String, Object> product : products) {
             StringBuilder content = new StringBuilder();
@@ -187,9 +187,35 @@ public class MultiAgentService {
             doc.getMetadata().put("productName", product.get("product_name").toString());
             doc.getMetadata().put("category", product.get("category").toString());
             doc.getMetadata().put("price", product.get("price").toString());
-            documents.add(doc);
+            allDocuments.add(doc);
         }
-        vectorStore.add(documents);
+        
+        // Process in batches of 50 to avoid rate limiting with 5K TPM embedding capacity
+        int batchSize = 50;
+        int totalBatches = (int) Math.ceil((double) allDocuments.size() / batchSize);
+        logger.info("Processing {} documents in {} batches of {}", allDocuments.size(), totalBatches, batchSize);
+        
+        for (int i = 0; i < allDocuments.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, allDocuments.size());
+            List<Document> batch = allDocuments.subList(i, end);
+            int batchNum = (i / batchSize) + 1;
+            
+            logger.info("Processing batch {}/{} ({} documents)", batchNum, totalBatches, batch.size());
+            vectorStore.add(batch);
+            logger.info("Completed batch {}/{}", batchNum, totalBatches);
+            
+            // Add delay between batches to avoid rate limiting (except for last batch)
+            if (end < allDocuments.size()) {
+                try {
+                    logger.info("Waiting 5 seconds before next batch to avoid rate limiting...");
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Data loading interrupted", e);
+                }
+            }
+        }
+        
         User user = new User();
         user.setId("1");
         user.setUserId("1");
